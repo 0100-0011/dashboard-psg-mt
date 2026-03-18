@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jornada de Contratação TIC | Monitorização (V4.0)</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuração de Cores Customizadas (Padrão Gov.br) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gov: {
+                            blue: '#1351b4',
+                            dark: '#003366', /* Azul Marinho Gov.br */
+                            light: '#2670e8',
+                            green: '#168821',
+                            red: '#e02424',
+                            yellow: '#ffcd00',
+                            bg: '#f2f5f8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Fontes e Ícones Phosphor -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { background-color: theme('colors.gov.bg'); }
+        
+        /* Estilos do Calendário Customizado */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 1px;
+            background-color: #e2e8f0;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+        .calendar-day-header {
+            background-color: #f8fafc;
+            text-align: center;
+            padding: 0.5rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .calendar-cell {
+            background-color: white;
+            min-height: 90px;
+            padding: 0.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .calendar-cell.empty { background-color: #f8fafc; }
+        .calendar-cell.today .date-num {
+            background-color: theme('colors.gov.blue');
+            color: white;
+            border-radius: 9999px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .date-num {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 2px;
+            align-self: flex-end;
+            margin-right: 4px;
+        }
+        .cal-event {
+            font-size: 0.7rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cal-event:hover { filter: brightness(0.95); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .event-completed { background-color: #dcfce7; color: #166534; border-left-color: #16a34a; }
+        .event-pending { background-color: #f1f5f9; color: #475569; border-left-color: #94a3b8; }
+        .event-late { background-color: #fee2e2; color: #991b1b; border-left-color: #dc2626; }
+        
+        .gauge-container { position: relative; width: 100%; height: 120px; display: flex; justify-content: center; }
+        .gauge-text { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Cabeçalho -->
+    <header class="bg-gov-dark text-white shadow-md z-10 shrink-0">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
+            <i class="ph-fill ph-chart-polar text-4xl text-gov-yellow"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Jornada de Contratação TIC: Engenharia de Dados & BI</h1>
+                <p class="text-xs text-blue-200 mt-1">Gestão por Fases e Performance (IN SGD/ME nº 94/2022 | Lei nº 14.133/2021)</p>
+            </div>
+            <div class="ml-auto flex gap-4">
+                <button onclick="limparDados()" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded-md transition text-white border border-white/20 flex items-center gap-2">
+                    <i class="ph ph-trash"></i> Reiniciar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Estrutura Principal -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
+        
+        <!-- Cronógrafo Complementar (Avanço Global) -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0">
+            <div class="flex justify-between items-end mb-1.5 px-1">
+                <span class="text-xs font-bold text-gray-700 uppercase flex items-center gap-1">
+                    <i class="ph-bold ph-sliders-horizontal text-gov-blue"></i> Cronógrafo de Avanço Global
+                </span>
+                <span id="cronoPercent" class="text-xs font-bold text-gov-blue">0%</span>
+            </div>
+            <div id="cronografoContainer" class="flex w-full h-3 bg-gray-100 rounded-full overflow-hidden gap-0.5">
+                <!-- Barras injetadas via JS -->
+            </div>
+        </section>
+
+        <!-- Gráfico de Linha (Progresso Cumulativo Global) -->
+        <section class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-gov-dark flex items-center gap-2">
+                    <i class="ph ph-trend-up text-lg"></i> Velocidade da Contratação (Progresso Acumulado)
+                </h2>
+                <div class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full flex gap-3">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Planejado</span>
+                    <span class="flex items-center gap-1"><span id="legendaExecutado" class="w-2 h-2 rounded-full bg-gov-green transition-colors"></span> Realizado</span>
+                </div>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="graficoLinha"></canvas>
+            </div>
+        </section>
+
+        <!-- Módulos de Fase (Cronômetros / Gauges) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Fase 1 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-file-text text-gov-blue"></i> Fase 1: Planejamento</h3>
+                <p class="text-[10px] text-gray-500 mb-4 text-center">DFD, PCA, EPC, ETP, Mapa e TR</p>
+                <div class="gauge-container">
+                    <canvas id="gaugeFase1"></canvas>
+                    <div class="gauge-text">
+                        <span id="percFase1" class="text-2xl font-black text-gov-dark">0%</span>
+                        <div id="fracFase1" class="text-[10px] font-semibold text-gray-500">0/0</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Fase 2 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-gavel text-gov-blue"></i> Fase 2: Seleção</h3>
+                <p class="text-[10px] text-gray-500 mb-4 text-center">Edital, Sessão, Habilitação e Homologação</p>
+                <div class="gauge-container">
+                    <canvas id="gaugeFase2"></canvas>
+                    <div class="gauge-text">
+                        <span id="percFase2" class="text-2xl font-black text-gov-dark">0%</span>
+                        <div id="fracFase2" class="text-[10px] font-semibold text-gray-500">0/0</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Fase 3 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-folder-open text-gov-blue"></i> Fase 3: Gestão</h3>
+                <p class="text-[10px] text-gray-500 mb-4 text-center">Assinatura, Reunião, 1ª OS e IMR</p>
+                <div class="gauge-container">
+                    <canvas id="gaugeFase3"></canvas>
+                    <div class="gauge-text">
+                        <span id="percFase3" class="text-2xl font-black text-gov-dark">0%</span>
+                        <div id="fracFase3" class="text-[10px] font-semibold text-gray-500">0/0</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendário Interativo e Checkpoints -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            <!-- Calendário Interativo (2/3 da largura) -->
+            <section class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px]">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-xl shrink-0">
+                    <h2 class="text-base font-bold text-gov-dark flex items-center gap-2">
+                        <i class="ph ph-calendar-blank text-lg"></i> Calendário de Metas (Click-to-Edit)
+                    </h2>
+                    <div class="flex items-center gap-4">
+                        <button onclick="mudarMes(-1)" class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition"><i class="ph-bold ph-caret-left"></i></button>
+                        <span id="mesAnoTexto" class="font-semibold text-sm w-32 text-center text-gov-blue">Março 2026</span>
+                        <button onclick="mudarMes(1)" class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition"><i class="ph-bold ph-caret-right"></i></button>
+                    </div>
+                </div>
+                <div class="p-4 flex-grow flex flex-col min-h-0">
+                    <div class="calendar-grid flex-grow" id="calendarGrid">
+                        <!-- Conteúdo injetado via JS -->
+                    </div>
+                    
+                    <div class="mt-4 flex justify-center gap-6 text-xs text-gray-600 shrink-0">
+                        <div class="flex items-center gap-1 font-medium"><i class="ph-fill ph-circle text-red-500"></i> Crítico (Alta)</div>
+                        <div class="flex items-center gap-1 font-medium"><i class="ph-fill ph-circle text-yellow-500"></i> Média</div>
+                        <div class="flex items-center gap-1 font-medium"><i class="ph-fill ph-circle text-green-500"></i> Baixa</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Painel de Checkpoints Rápidos (1/3 da largura) -->
+            <aside class="xl:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px]">
+                <div class="p-4 border-b border-gray-100 bg-gov-dark text-white rounded-t-xl flex justify-between items-center shrink-0">
+                    <h2 class="text-sm font-bold flex items-center gap-2">
+                        <i class="ph-bold ph-list-checks text-lg"></i> Checkpoints Rápidos
+                    </h2>
+                    <span id="progressoGeral" class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded">0/16</span>
+                </div>
+                <div class="p-3 overflow-y-auto flex-grow space-y-2" id="checklist-container" style="scrollbar-width: thin;">
+                    <!-- Conteúdo injetado via JS -->
+                </div>
+            </aside>
+            
+        </div>
+
+    </main>
+
+    <!-- Modal Click-to-Edit -->
+    <div id="eventoModal" class="fixed inset-0 bg-gov-dark/60 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="modalContent">
+            
+            <div class="p-5 border-b border-gray-100 flex justify-between items-start">
+                <div>
+                    <span id="modalFaseBadge" class="text-[10px] font-bold tracking-wider uppercase bg-gray-100 text-gray-600 px-2 py-0.5 rounded mb-2 inline-block">Fase</span>
+                    <h2 id="modalTitulo" class="text-lg font-bold text-gray-800 leading-tight">Nome do Entregável</h2>
+                </div>
+                <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 rounded-full p-1.5">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+                <input type="hidden" id="modalIndex">
+                
+                <!-- Responsável (Papéis EPC) -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Responsável (Papel EPC)</label>
+                    <select id="modalResp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition bg-white cursor-pointer">
+                        <option value="">Selecione o Responsável...</option>
+                        <option value="Integrante Técnico">Integrante Técnico (EPC)</option>
+                        <option value="Integrante Requisitante">Integrante Requisitante (EPC)</option>
+                        <option value="Integrante Administrativo">Integrante Administrativo (EPC)</option>
+                        <option value="SGETI / Gestor">SGETI / Gestor</option>
+                        <option value="CONJUR">CONJUR</option>
+                        <option value="CPL / Pregoeiro">CPL / Pregoeiro</option>
+                    </select>
+                </div>
+
+                <!-- Link do Artefato -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Link do Artefato (SEI / Drive)</label>
+                    <div class="relative">
+                        <i class="ph ph-link absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="url" id="modalLink" placeholder="https://..." class="w-full text-sm border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Observações / Status Detalhado</label>
+                    <textarea id="modalObs" rows="2" placeholder="Ex: Minuta ainda em revisão na CONJUR..." class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none resize-none transition"></textarea>
+                </div>
+
+                <!-- Criticidade -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Criticidade do Entregável</label>
+                    <div class="flex gap-3">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="crit" value="low" class="peer sr-only">
+                            <div class="text-center text-xs py-2 border border-gray-200 rounded-lg peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 transition">
+                                🟢 Baixa
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="crit" value="medium" class="peer sr-only">
+                            <div class="text-center text-xs py-2 border border-gray-200 rounded-lg peer-checked:bg-yellow-50 peer-checked:border-yellow-500 peer-checked:text-yellow-700 transition">
+                                🟡 Média
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="crit" value="high" class="peer sr-only">
+                            <div class="text-center text-xs py-2 border border-gray-200 rounded-lg peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:text-red-700 transition">
+                                🔴 Alta
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Status e Data Real -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mt-4">
+                    <label class="flex items-center gap-3 cursor-pointer mb-3">
+                        <input type="checkbox" id="modalStatus" class="w-5 h-5 rounded border-gray-300 text-gov-green focus:ring-gov-green accent-gov-green transition" onchange="toggleDataReal()">
+                        <span class="text-sm font-semibold text-gray-800">Marcar como Concluído</span>
+                    </label>
+                    
+                    <div id="dataRealContainer" class="hidden animate-fade-in pl-8">
+                        <label class="block text-xs text-gray-500 mb-1">Data de Execução Real</label>
+                        <input type="date" id="modalDataReal" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-green outline-none transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                <button onclick="fecharModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancelar</button>
+                <button onclick="salvarModal()" class="px-5 py-2 text-sm font-bold text-white bg-gov-blue hover:bg-gov-dark rounded-lg transition shadow-sm">Guardar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 1. CONFIGURAÇÃO FIREBASE E AUTENTICAÇÃO ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyARrh5R-5eHA6W5_Sa3XaOrxtUkYjRJqhE",
+          authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
+          projectId: "monitoramento-psg-dados-mt",
+          storageBucket: "monitoramento-psg-dados-mt.firebasestorage.app",
+          messagingSenderId: "676956978620",
+          appId: "1:676956978620:web:756a5d490dfec92689ffb9"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUser = null;
+        let docRef = null;
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Erro na autenticação:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                setupSync();
+            }
+        });
+
+        // --- 2. DADOS INICIAIS (BASE_DATA) ---
+        const HOJE_STR = "2026-03-20"; 
+
+        const BASE_DATA = [
+            { id: 1, phase: 1, title: "1ª Reunião de GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
+            { id: 2, phase: 1, title: "2ª Reunião de GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 3, phase: 1, title: "Criação do DFD", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 4, phase: 1, title: "Alteração PCA 2026", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 5, phase: 1, title: "Portaria EPC", orig: "2026-03-27", crit: "medium", resp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 6, phase: 1, title: "Finalização ETP-TIC", orig: "2026-04-24", crit: "medium", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 7, phase: 1, title: "Mapa de Riscos e TR", orig: "2026-05-22", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 8, phase: 1, title: "Parecer CONJUR", orig: "2026-06-05", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 9, phase: 2, title: "Publicação do Edital", orig: "2026-06-15", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 10, phase: 2, title: "Sessão Pública/Julgamento", orig: "2026-07-02", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 11, phase: 2, title: "Habilitação", orig: "2026-07-16", crit: "medium", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 12, phase: 2, title: "Homologação", orig: "2026-07-25", crit: "high", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 13, phase: 3, title: "Assinatura Contrato", orig: "2026-08-05", crit: "high", resp: "Integrante Administrativo", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 14, phase: 3, title: "Reunião Inicial", orig: "2026-08-12", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 15, phase: 3, title: "Emissão 1ª OS", orig: "2026-08-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 16, phase: 3, title: "Monitoramento IMR", orig: "2026-09-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" }
+        ];
+
+        let milestones = [];
+        let graficoLinhaInstance = null;
+        let gaugeInstances = { 1: null, 2: null, 3: null };
+
+        let mesAtual = 2; // Março (0-index)
+        let anoAtual = 2026;
+        const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+        function strToDate(str) { const [y, m, d] = str.split('-'); return new Date(y, m - 1, d); }
+        function dateToStr(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+        function addDays(str, days) { const d = strToDate(str); d.setDate(d.getDate() + days); return dateToStr(d); }
+        function formatPt(str) { if (!str) return ''; const [y, m, d] = str.split('-'); return `${d}/${m}`; }
+        
+        const getCritIcon = (crit) => {
+            if(crit === 'high') return '<i class="ph-fill ph-circle text-red-500"></i>';
+            if(crit === 'medium') return '<i class="ph-fill ph-circle text-yellow-500"></i>';
+            return '<i class="ph-fill ph-circle text-green-500"></i>';
+        };
+
+        // --- 3. SINCRONIZAÇÃO EM TEMPO REAL (FIRESTORE) ---
+        function setupSync() {
+            if (!currentUser) return;
+            
+            // Regra 1: Guardar num caminho público para toda a equipa aceder
+            docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones');
+
+            // Escutar alterações na nuvem em tempo real
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    milestones = docSnap.data().milestones;
+                } else {
+                    // Inicializa a base de dados se estiver vazia
+                    milestones = JSON.parse(JSON.stringify(BASE_DATA));
+                    setDoc(docRef, { milestones: milestones }).catch(e => console.error(e));
+                }
+                recalcularCascata();
+                atualizarInterface();
+            }, (error) => {
+                console.error("Erro na sincronização Firestore:", error);
+            });
+        }
+
+        // Funções Globais expostas para o HTML (onClick)
+        window.limparDados = () => {
+            if (!currentUser || !docRef) return;
+            const resetData = JSON.parse(JSON.stringify(BASE_DATA));
+            setDoc(docRef, { milestones: resetData }).catch(e => console.error("Erro ao limpar:", e));
+        };
+
+        window.mudarMes = (delta) => {
+            mesAtual += delta;
+            if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
+            if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
+            renderCalendario();
+        };
+
+        window.abrirModal = (index) => {
+            const m = milestones[index];
+            document.getElementById('modalIndex').value = index;
+            document.getElementById('modalTitulo').innerText = m.title;
+            document.getElementById('modalFaseBadge').innerText = `Fase ${m.phase}`;
+            document.getElementById('modalResp').value = m.resp || '';
+            document.getElementById('modalLink').value = m.link || '';
+            document.getElementById('modalObs').value = m.obs || '';
+            document.querySelector(`input[name="crit"][value="${m.crit}"]`).checked = true;
+            
+            const checkbox = document.getElementById('modalStatus');
+            checkbox.checked = m.status === 'completed';
+            document.getElementById('modalDataReal').value = m.executedDate || HOJE_STR;
+            
+            window.toggleDataReal();
+
+            const modal = document.getElementById('eventoModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        };
+
+        window.fecharModal = () => {
+            const modal = document.getElementById('eventoModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        window.toggleDataReal = () => {
+            const container = document.getElementById('dataRealContainer');
+            if (document.getElementById('modalStatus').checked) container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        };
+
+        window.salvarModal = () => {
+            const index = document.getElementById('modalIndex').value;
+            const m = milestones[index];
+            
+            m.resp = document.getElementById('modalResp').value;
+            m.link = document.getElementById('modalLink').value;
+            m.obs = document.getElementById('modalObs').value;
+            m.crit = document.querySelector('input[name="crit"]:checked').value;
+            
+            const isCompleted = document.getElementById('modalStatus').checked;
+            if (isCompleted) {
+                m.status = 'completed';
+                m.executedDate = document.getElementById('modalDataReal').value || HOJE_STR;
+            } else {
+                m.status = 'pending';
+                m.executedDate = null;
+            }
+
+            window.fecharModal();
+
+            // Gravar alterações no Firestore (sincroniza automaticamente)
+            if (currentUser && docRef) {
+                setDoc(docRef, { milestones: milestones }).catch(e => console.error("Erro ao gravar:", e));
+            }
+        };
+
+        // --- 4. LÓGICA DE NEGÓCIO E RENDERIZAÇÃO ---
+        function recalcularCascata() {
+            for (let i = 0; i < milestones.length; i++) {
+                let atual = milestones[i];
+                if (i === 0) {
+                    atual.projectedDate = atual.executedDate || atual.orig;
+                } else {
+                    let ant = milestones[i - 1];
+                    let dataBaseStr = ant.status === 'completed' ? ant.executedDate : 
+                        ((strToDate(ant.projectedDate) < strToDate(HOJE_STR)) ? HOJE_STR : ant.projectedDate);
+                    
+                    // Encontra a diferença em dias entre a data original da tarefa atual e a anterior
+                    const diffDiasOriginais = Math.round((strToDate(atual.orig) - strToDate(ant.orig)) / (1000*60*60*24));
+                    atual.projectedDate = addDays(dataBaseStr, diffDiasOriginais >= 0 ? diffDiasOriginais : 0);
+                }
+                atual.isLate = (atual.status !== 'completed' && strToDate(HOJE_STR) > strToDate(atual.projectedDate));
+            }
+        }
+
+        function atualizarInterface() {
+            renderCronografo();
+            renderGauges();
+            renderGraficoLinha();
+            renderCalendario();
+            renderCheckpoints();
+        }
+
+        function renderCheckpoints() {
+            const container = document.getElementById('checklist-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            milestones.forEach((item, i) => {
+                const isC = item.status === 'completed';
+                const dateToShow = formatPt(isC ? item.executedDate : item.projectedDate);
+                
+                const html = `
+                    <div class="border border-gray-100 rounded-md p-3 ${isC ? 'bg-gray-50' : 'bg-white'} hover:shadow-sm cursor-pointer transition relative group" onclick="abrirModal(${i})">
+                        ${isC ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-gov-green rounded-l-md"></div>' : ''}
+                        ${!isC && item.isLate ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-gov-red rounded-l-md animate-pulse"></div>' : ''}
+                        
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="flex-1 pr-2">
+                                <h4 class="text-xs font-semibold text-gray-800 flex items-center gap-1 ${isC ? 'line-through text-gray-400' : ''}">
+                                    ${getCritIcon(item.crit)} ${i+1}. ${item.title}
+                                </h4>
+                                <p class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+                                    <i class="ph-fill ph-user"></i> ${item.resp || 'Sem responsável'}
+                                </p>
+                                ${item.obs ? `<p class="text-[10px] text-gray-600 mt-1 italic leading-tight border-l-2 border-gray-200 pl-1.5">${item.obs}</p>` : ''}
+                            </div>
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                <span class="text-[9px] px-1.5 py-0.5 rounded ${isC ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'} whitespace-nowrap">
+                                    ${dateToShow}
+                                </span>
+                                ${item.link ? `<button onclick="event.stopPropagation(); window.open('${item.link}', '_blank')" class="text-[9px] text-gov-blue hover:underline flex items-center gap-1 mt-1 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 transition hover:bg-blue-100"><i class="ph-bold ph-link"></i> Acessar</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+            
+            const concluidos = milestones.filter(m => m.status === 'completed').length;
+            const progGeral = document.getElementById('progressoGeral');
+            if(progGeral) progGeral.innerText = `${concluidos}/${milestones.length}`;
+        }
+
+        function renderCronografo() {
+            const container = document.getElementById('cronografoContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            let concluidos = 0;
+            milestones.forEach((m, i) => {
+                let colorClass = 'bg-gray-200';
+                if (m.status === 'completed') {
+                    colorClass = 'bg-gov-green';
+                    concluidos++;
+                } else if (m.status === 'pending' && m.orig < HOJE_STR) {
+                    colorClass = 'bg-gov-red animate-pulse';
+                } else if (i === 0 || milestones[i-1].status === 'completed') {
+                    colorClass = 'bg-gov-blue/50'; 
+                }
+                
+                container.innerHTML += `<div class="h-full flex-1 ${colorClass}" title="${m.title}"></div>`;
+            });
+            
+            const perc = Math.round((concluidos / milestones.length) * 100);
+            document.getElementById('cronoPercent').innerText = `${perc}% Concluído`;
+        }
+
+        function renderGauges() {
+            for (let fase = 1; fase <= 3; fase++) {
+                const itensFase = milestones.filter(m => m.phase === fase);
+                const concluidos = itensFase.filter(m => m.status === 'completed').length;
+                const total = itensFase.length;
+                const percentual = total === 0 ? 0 : Math.round((concluidos / total) * 100);
+
+                document.getElementById(`percFase${fase}`).innerText = `${percentual}%`;
+                document.getElementById(`fracFase${fase}`).innerText = `${concluidos}/${total} Concluídos`;
+
+                const ctx = document.getElementById(`gaugeFase${fase}`).getContext('2d');
+                if (gaugeInstances[fase]) gaugeInstances[fase].destroy();
+
+                let color = '#2670e8'; 
+                if (percentual === 100) color = '#168821'; 
+
+                gaugeInstances[fase] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Concluído', 'Pendente'],
+                        datasets: [{
+                            data: [percentual, 100 - percentual],
+                            backgroundColor: [color, '#e2e8f0'],
+                            borderWidth: 0,
+                            borderRadius: [4, 0]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        circumference: 180,
+                        rotation: -90,     
+                        cutout: '75%',     
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        animation: { animateRotate: true, animateScale: false }
+                    }
+                });
+            }
+        }
+
+        function renderGraficoLinha() {
+            const ctx = document.getElementById('graficoLinha').getContext('2d');
+            const temAtraso = milestones.some(m => m.status === 'pending' && m.orig < HOJE_STR);
+            const corExecucao = temAtraso ? '#e02424' : '#168821'; 
+            document.getElementById('legendaExecutado').className = `w-2 h-2 rounded-full transition-colors ${temAtraso ? 'bg-gov-red' : 'bg-gov-green'}`;
+
+            let datasUnicas = new Set();
+            milestones.forEach(m => {
+                datasUnicas.add(m.orig);
+                if (m.status === 'completed' && m.executedDate) datasUnicas.add(m.executedDate);
+            });
+            datasUnicas.add(HOJE_STR); 
+            let timeline = Array.from(datasUnicas).sort();
+            
+            const planejadoAcumulado = timeline.map(data => milestones.filter(m => m.orig <= data).length);
+            const executadoAcumulado = timeline.map(data => {
+                if (data > HOJE_STR) return null; 
+                return milestones.filter(m => m.status === 'completed' && m.executedDate <= data).length;
+            });
+
+            if (graficoLinhaInstance) graficoLinhaInstance.destroy();
+
+            graficoLinhaInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeline.map(formatPt),
+                    datasets: [
+                        {
+                            label: 'Progresso Planejado',
+                            data: planejadoAcumulado,
+                            borderColor: '#94a3b8',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 2,
+                            fill: false,
+                            tension: 0
+                        },
+                        {
+                            label: 'Progresso Realizado',
+                            data: executadoAcumulado,
+                            borderColor: corExecucao,
+                            backgroundColor: temAtraso ? 'rgba(224, 36, 36, 0.1)' : 'rgba(22, 136, 33, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: corExecucao,
+                            pointRadius: 4,
+                            fill: true,
+                            tension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: milestones.length,
+                            ticks: { stepSize: 2, font: {size: 10} }
+                        },
+                        x: { ticks: { font: {size: 10}, maxTicksLimit: 10 } }
+                    }
+                }
+            });
+        }
+
+        function renderCalendario() {
+            document.getElementById('mesAnoTexto').innerText = `${mesesNomes[mesAtual]} ${anoAtual}`;
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            diasSemana.forEach(dia => { grid.innerHTML += `<div class="calendar-day-header">${dia}</div>`; });
+
+            const primeiroDiaMes = new Date(anoAtual, mesAtual, 1).getDay();
+            const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+            const [hojeAno, hojeMes, hojeDia] = HOJE_STR.split('-').map(Number);
+            const isHojeMesAno = (hojeAno === anoAtual && (hojeMes - 1) === mesAtual);
+
+            for (let i = 0; i < primeiroDiaMes; i++) { grid.innerHTML += `<div class="calendar-cell empty"></div>`; }
+
+            for (let dia = 1; dia <= diasNoMes; dia++) {
+                const dataAtualStr = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const isHoje = isHojeMesAno && dia === hojeDia;
+                
+                let eventosHtml = '';
+                milestones.forEach((m, index) => {
+                    const dataAlvo = m.status === 'completed' ? m.executedDate : m.orig;
+                    if (dataAlvo === dataAtualStr) {
+                        let styleClass = 'event-pending';
+                        if (m.status === 'completed') styleClass = 'event-completed';
+                        else if (m.orig < HOJE_STR) styleClass = 'event-late';
+
+                        eventosHtml += `
+                            <div class="cal-event ${styleClass}" onclick="abrirModal(${index})">
+                                ${getCritIcon(m.crit)}
+                                <span class="truncate">${m.title}</span>
+                            </div>
+                        `;
+                    }
+                });
+
+                grid.innerHTML += `
+                    <div class="calendar-cell ${isHoje ? 'today' : ''}">
+                        <div class="date-num">${dia}</div>
+                        ${eventosHtml}
+                    </div>
+                `;
+            }
+
+            const celulasTotais = primeiroDiaMes + diasNoMes;
+            const restos = celulasTotais % 7 === 0 ? 0 : 7 - (celulasTotais % 7);
+            for (let i = 0; i < restos; i++) { grid.innerHTML += `<div class="calendar-cell empty"></div>`; }
+        }
+
+        // Iniciar Autenticação (O processo aciona o Sincronizador Firebase em sequência)
+        initAuth();
+
+    </script>
+</body>
+</html>
