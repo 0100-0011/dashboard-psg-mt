@@ -68,9 +68,13 @@
             gap: 3px;
         }
         .calendar-cell.empty { background-color: #f8fafc; }
+        .calendar-cell.today {
+            background-color: #fffbeb;
+            border: 2px solid theme('colors.gov.yellow');
+        }
         .calendar-cell.today .date-num {
-            background-color: theme('colors.gov.blue');
-            color: white;
+            background-color: theme('colors.gov.yellow');
+            color: theme('colors.gov.dark');
             border-radius: 9999px;
             width: 24px;
             height: 24px;
@@ -125,12 +129,7 @@
             <i class="ph-fill ph-chart-polar text-5xl text-gov-yellow drop-shadow-md"></i>
             <div>
                 <h1 class="text-2xl font-bold tracking-tight drop-shadow-md">Monitoramento PSG "Fábrica de Dados" - MT</h1>
-                <p class="text-xs text-blue-100 mt-1 drop-shadow-md font-medium">Gestão por Fases e Performance (IN SGD/ME nº 94/2022 | Lei nº 14.133/2021)</p>
-            </div>
-            <div class="ml-auto flex gap-4">
-                <button onclick="limparDados()" class="px-3 py-1.5 text-xs bg-gov-dark/50 backdrop-blur-sm hover:bg-gov-dark/80 rounded-md transition text-white border border-white/20 flex items-center gap-2 shadow-sm">
-                    <i class="ph ph-trash"></i> Reiniciar
-                </button>
+                <p class="text-xs text-blue-100 mt-1 drop-shadow-md font-medium">Cronograma Agressivo "Fast-Track" (IN SGD/ME nº 94/2022 | Lei nº 14.133/2021)</p>
             </div>
         </div>
     </header>
@@ -138,6 +137,35 @@
     <!-- Estrutura Principal -->
     <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
         
+        <!-- Novos Contadores de Prazo -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
+                <div class="bg-blue-50 p-3 rounded-lg text-gov-blue">
+                    <i class="ph-fill ph-flag-checkered text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Dias até o Prazo Final</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span id="diasPrazoFinal" class="text-2xl font-black text-gov-dark">--</span>
+                        <span class="text-xs text-gray-500 font-medium">Dias (01/07/2026)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
+                <div class="bg-yellow-50 p-3 rounded-lg text-yellow-600" id="iconeProxEntrega">
+                    <i class="ph-fill ph-clock-countdown text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Dias até a Próxima Entrega</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span id="diasProximaEntrega" class="text-2xl font-black text-yellow-700">--</span>
+                        <span id="nomeProximaEntrega" class="text-[10px] text-gray-500 font-medium truncate max-w-[150px] sm:max-w-[200px]">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Cronógrafo Complementar (Avanço Global) -->
         <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0">
             <div class="flex justify-between items-end mb-1.5 px-1">
@@ -168,10 +196,10 @@
         </section>
 
         <!-- Módulos de Fase (Cronômetros / Gauges) -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Fase 1 -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Fase 1: Governança -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
-                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-file-text text-gov-blue"></i> Fase 1: Planejamento</h3>
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-bank text-gov-blue"></i> Fase 1: Governança</h3>
                 <p id="fase1-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase1"></canvas>
@@ -181,9 +209,9 @@
                     </div>
                 </div>
             </div>
-            <!-- Fase 2 -->
+            <!-- Fase 2: Planejamento -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
-                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-gavel text-gov-blue"></i> Fase 2: Seleção</h3>
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-file-text text-gov-blue"></i> Fase 2: Planejamento</h3>
                 <p id="fase2-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase2"></canvas>
@@ -193,15 +221,27 @@
                     </div>
                 </div>
             </div>
-            <!-- Fase 3 -->
+            <!-- Fase 3: Seleção -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
-                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-folder-open text-gov-blue"></i> Fase 3: Gestão</h3>
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-gavel text-gov-blue"></i> Fase 3: Seleção</h3>
                 <p id="fase3-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase3"></canvas>
                     <div class="gauge-text">
                         <span id="percFase3" class="text-2xl font-black text-gov-dark">0%</span>
                         <div id="fracFase3" class="text-[10px] font-semibold text-gray-500">0/0</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Fase 4: Gestão -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
+                <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-folder-open text-gov-blue"></i> Fase 4: Gestão</h3>
+                <p id="fase4-items" class="text-[10px] mb-4 text-center leading-tight"></p>
+                <div class="gauge-container">
+                    <canvas id="gaugeFase4"></canvas>
+                    <div class="gauge-text">
+                        <span id="percFase4" class="text-2xl font-black text-gov-dark">0%</span>
+                        <div id="fracFase4" class="text-[10px] font-semibold text-gray-500">0/0</div>
                     </div>
                 </div>
             </div>
@@ -235,17 +275,60 @@
                 </div>
             </section>
 
-            <!-- Painel de Checkpoints Rápidos (1/3 da largura) -->
-            <aside class="xl:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px]">
-                <div class="p-4 border-b border-gray-100 bg-gov-dark text-white rounded-t-xl flex justify-between items-center shrink-0">
-                    <h2 class="text-sm font-bold flex items-center gap-2">
-                        <i class="ph-bold ph-list-checks text-lg"></i> Checkpoints
-                    </h2>
-                    <span id="progressoGeral" class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded">0/16</span>
-                </div>
-                <div class="p-3 overflow-y-auto flex-grow space-y-2" id="checklist-container" style="scrollbar-width: thin;">
-                    <!-- Conteúdo injetado via JS -->
-                </div>
+            <!-- Painel de Checkpoints e Riscos Rápidos (1/3 da largura) -->
+            <aside class="xl:col-span-1 flex flex-col gap-6 h-[500px]">
+                
+                <!-- Checkpoints -->
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 min-h-0">
+                    <div class="p-3 border-b border-gray-100 bg-gov-dark text-white rounded-t-xl flex justify-between items-center shrink-0">
+                        <h2 class="text-sm font-bold flex items-center gap-2">
+                            <i class="ph-bold ph-list-checks text-lg"></i> Checkpoints
+                        </h2>
+                        <span id="progressoGeral" class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded">0/15</span>
+                    </div>
+                    <div class="p-2 overflow-y-auto flex-grow space-y-2" id="checklist-container" style="scrollbar-width: thin;">
+                        <!-- Conteúdo injetado via JS -->
+                    </div>
+                </section>
+
+                <!-- Riscos Críticos "Fast-Track" -->
+                <section class="bg-white rounded-xl shadow-sm border border-red-100 flex flex-col shrink-0">
+                    <div class="p-2.5 bg-red-50 border-b border-red-100 flex items-center gap-2 rounded-t-xl">
+                        <i class="ph-fill ph-warning-octagon text-gov-red text-base"></i>
+                        <h3 class="font-bold text-gov-red text-xs">Governança & Riscos ("Fast-Track")</h3>
+                    </div>
+                    <div class="p-3 overflow-y-auto scrollbar-hide text-[11px] space-y-3 bg-red-50/20 rounded-b-xl max-h-48">
+                        <div class="flex items-start gap-2">
+                            <div class="text-gov-red mt-0.5"><i class="ph-fill ph-target"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Transição Contratual</h4>
+                                <p class="text-gray-600 leading-tight">Encerra 09/07. Assinatura até 01/07 permite apenas 8 dias de overlap. Risco Alto.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="text-gov-yellow mt-0.5"><i class="ph-fill ph-map-trifold"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Aprovação do PCA</h4>
+                                <p class="text-gray-600 leading-tight">Gargalo Crítico. Condição sine qua non para o ETP/TR avançar.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="text-gov-blue mt-0.5"><i class="ph-fill ph-money"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Métrica de Pagamento</h4>
+                                <p class="text-gray-600 leading-tight">Adotar Portaria SGD/MGI nº 750/2023 (Resultados/Unidades) no TR.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="text-gov-red mt-0.5"><i class="ph-fill ph-scales"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Parecer Jurídico</h4>
+                                <p class="text-gray-600 leading-tight">Limite 22/05 (10 dias). Diligências causarão colapso no cronograma.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </aside>
             
         </div>
@@ -280,6 +363,12 @@
                         <option value="SGETI / Gestor">SGETI / Gestor</option>
                         <option value="CONJUR">CONJUR</option>
                         <option value="CPL / Pregoeiro">CPL / Pregoeiro</option>
+                        <option value="Autoridade Competente">Autoridade Competente</option>
+                        <option value="Gestor / Contratada">Gestor / Contratada</option>
+                        <option value="Gestor / Fiscais">Gestor / Fiscais</option>
+                        <option value="Autoridade Superior">Autoridade Superior</option>
+                        <option value="Área de Licitações">Área de Licitações</option>
+                        <option value="Agente Contratação">Agente Contratação</option>
                     </select>
                 </div>
 
@@ -350,8 +439,6 @@
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. CONFIGURAÇÃO FIREBASE E AUTENTICAÇÃO ---
-        
-        // ⚠️ Configuração Dinâmica: Usa o ambiente de pré-visualização ou as suas credenciais manuais (GitHub Pages)
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
               apiKey: "AIzaSyC8_R9LXc6WSbbf18eTX3zvTHlG9yDVqy0",
               authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
@@ -389,31 +476,37 @@
             }
         });
 
-        // --- 2. DADOS INICIAIS (BASE_DATA) ---
-        const HOJE_STR = "2026-03-20"; 
+        // --- 2. DADOS INICIAIS (BASE_DATA - NOVO CRONOGRAMA "FAST-TRACK") ---
+        const HOJE_STR = "2026-03-19"; 
 
         const BASE_DATA = [
-            { id: 1, phase: 1, title: "F1.1 - 1ª Reunião de GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
-            { id: 2, phase: 1, title: "F1.2 - 2ª Reunião de GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
-            { id: 3, phase: 1, title: "F1.3 - Criação do DFD", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
-            { id: 4, phase: 1, title: "F1.4 - Alteração PCA 2026", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
-            { id: 5, phase: 1, title: "F1.5 - Portaria EPC", orig: "2026-03-27", crit: "medium", resp: "", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 6, phase: 1, title: "F1.6 - Finalização ETP-TIC", orig: "2026-04-24", crit: "medium", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 7, phase: 1, title: "F1.7 - Mapa de Riscos e TR", orig: "2026-05-22", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 8, phase: 1, title: "F1.8 - Parecer CONJUR", orig: "2026-06-05", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 9, phase: 2, title: "F2.1 - Publicação do Edital", orig: "2026-06-15", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 10, phase: 2, title: "F2.2 - Sessão Pública/Julgamento", orig: "2026-07-02", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 11, phase: 2, title: "F2.3 - Habilitação", orig: "2026-07-16", crit: "medium", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 12, phase: 2, title: "F2.4 - Homologação", orig: "2026-07-25", crit: "high", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 13, phase: 3, title: "F3.1 - Assinatura Contrato", orig: "2026-08-05", crit: "high", resp: "Integrante Administrativo", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 14, phase: 3, title: "F3.2 - Reunião Inicial", orig: "2026-08-12", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 15, phase: 3, title: "F3.3 - Emissão 1ª OS", orig: "2026-08-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 16, phase: 3, title: "F3.4 - Monitoramento IMR", orig: "2026-09-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" }
+            // Fase 1: Governança
+            { id: 1, phase: 1, title: "F1.1 - 1ª Reunião do GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
+            { id: 2, phase: 1, title: "F1.2 - 2ª Reunião do GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 3, phase: 1, title: "F1.3 - Inserção do DFD", orig: "2026-03-16", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 4, phase: 1, title: "F1.4 - Formulário PCA", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 5, phase: 1, title: "F1.5 - Aprov. PCA e EPC", orig: "2026-03-27", crit: "high", resp: "Autoridade Competente", status: "pending", executedDate: null, link: "", obs: "Aprovação é condição sine qua non" },
+            
+            // Fase 2: Planejamento
+            { id: 6, phase: 2, title: "F2.1 - ETP-TIC e Pesquisa", orig: "2026-04-17", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 7, phase: 2, title: "F2.2 - TR e Mapa de Riscos", orig: "2026-05-08", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "Adotar Portaria SGD/MGI nº 750/2023" },
+            { id: 8, phase: 2, title: "F2.3 - Parecer CONJUR", orig: "2026-05-22", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "Apenas 10 dias úteis reservados" },
+            { id: 9, phase: 2, title: "F2.4 - Aprov. SGETI/EPC", orig: "2026-05-29", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
+            
+            // Fase 3: Seleção
+            { id: 10, phase: 3, title: "F3.1 - Edital no PNCP", orig: "2026-06-01", crit: "high", resp: "Área de Licitações", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 11, phase: 3, title: "F3.2 - Sessão Pública", orig: "2026-06-15", crit: "medium", resp: "Agente Contratação", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 12, phase: 3, title: "F3.3 - Julgamento/Habilitação", orig: "2026-06-26", crit: "medium", resp: "Agente Contratação", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 13, phase: 3, title: "F3.4 - Homologação", orig: "2026-07-01", crit: "high", resp: "Autoridade Superior", status: "pending", executedDate: null, link: "", obs: "Data limite final da Seleção" },
+            
+            // Fase 4: Gestão
+            { id: 14, phase: 4, title: "F4.1 - Assinatura Contrato", orig: "2026-07-06", crit: "high", resp: "Gestor / Contratada", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 15, phase: 4, title: "F4.2 - Início Operação (Transição)", orig: "2026-07-09", crit: "high", resp: "Gestor / Fiscais", status: "pending", executedDate: null, link: "", obs: "Encerramento do contrato da First" }
         ];
 
         let milestones = [];
         let graficoLinhaInstance = null;
-        let gaugeInstances = { 1: null, 2: null, 3: null };
+        let gaugeInstances = { 1: null, 2: null, 3: null, 4: null };
 
         let mesAtual = 2; // Março (0-index)
         let anoAtual = 2026;
@@ -424,6 +517,11 @@
         function dateToStr(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
         function addDays(str, days) { const d = strToDate(str); d.setDate(d.getDate() + days); return dateToStr(d); }
         function formatPt(str) { if (!str) return ''; const [y, m, d] = str.split('-'); return `${d}/${m}`; }
+        function diffDays(str1, str2) {
+            const d1 = strToDate(str1);
+            const d2 = strToDate(str2);
+            return Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+        }
         
         const getCritIcon = (crit) => {
             if(crit === 'high') return '<i class="ph-fill ph-circle text-red-500"></i>';
@@ -435,7 +533,8 @@
         function setupSync() {
             if (!currentUser) return;
             
-            docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones');
+            // Alterado caminho do documento para "milestones_fast_track" para resetar automaticamente a base com as novas datas
+            docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones_fast_track');
 
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -452,12 +551,6 @@
         }
 
         // --- EXPOSIÇÃO GLOBAL DE FUNÇÕES ---
-        window.limparDados = () => {
-            if (!currentUser || !docRef) return;
-            const resetData = JSON.parse(JSON.stringify(BASE_DATA));
-            setDoc(docRef, { milestones: resetData }).catch(e => console.error("Erro ao limpar:", e));
-        };
-
         window.mudarMes = (delta) => {
             mesAtual += delta;
             if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
@@ -552,6 +645,50 @@
             renderGraficoLinha();
             renderCalendario();
             renderCheckpoints();
+            renderContadores();
+        }
+
+        function renderContadores() {
+            // O prazo final da contratação para assinar é 01/07/2026 (Homologação)
+            const prazoFinalDate = "2026-07-01"; 
+            const diasFinal = diffDays(HOJE_STR, prazoFinalDate);
+            
+            const elPrazoFinal = document.getElementById('diasPrazoFinal');
+            if(elPrazoFinal) elPrazoFinal.innerText = diasFinal;
+
+            const pendentes = milestones.filter(m => m.status !== 'completed');
+            const elProx = document.getElementById('diasProximaEntrega');
+            const elProxNome = document.getElementById('nomeProximaEntrega');
+            const elIcone = document.getElementById('iconeProxEntrega');
+
+            if (pendentes.length > 0) {
+                const prox = pendentes[0];
+                const dataAlvo = prox.projectedDate || prox.orig;
+                const diasProx = diffDays(HOJE_STR, dataAlvo);
+                const proxNome = prox.title;
+
+                elProxNome.innerText = proxNome;
+
+                if (diasProx < 0) {
+                    elProx.innerText = Math.abs(diasProx);
+                    elProxNome.innerText = `Atrasado! (${proxNome})`;
+                    elProx.className = "text-2xl font-black text-red-600";
+                    elIcone.className = "bg-red-50 p-3 rounded-lg text-red-600";
+                } else if (diasProx === 0) {
+                    elProx.innerText = "Hoje";
+                    elProx.className = "text-2xl font-black text-yellow-600";
+                    elIcone.className = "bg-yellow-50 p-3 rounded-lg text-yellow-600";
+                } else {
+                    elProx.innerText = diasProx;
+                    elProx.className = "text-2xl font-black text-gov-blue";
+                    elIcone.className = "bg-blue-50 p-3 rounded-lg text-gov-blue";
+                }
+            } else {
+                elProx.innerText = "0";
+                elProxNome.innerText = "Tudo concluído!";
+                elProx.className = "text-2xl font-black text-gov-green";
+                elIcone.className = "bg-green-50 p-3 rounded-lg text-gov-green";
+            }
         }
 
         function renderCheckpoints() {
@@ -564,25 +701,25 @@
                 const dateToShow = formatPt(isC ? item.executedDate : item.projectedDate);
                 
                 const html = `
-                    <div class="border border-gray-100 rounded-md p-3 ${isC ? 'bg-gray-50' : 'bg-white'} hover:shadow-sm cursor-pointer transition relative group" onclick="abrirModal(${i})">
+                    <div class="border border-gray-100 rounded-md p-2 ${isC ? 'bg-gray-50' : 'bg-white'} hover:shadow-sm cursor-pointer transition relative group" onclick="abrirModal(${i})">
                         ${isC ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-gov-green rounded-l-md"></div>' : ''}
                         ${!isC && item.isLate ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-gov-red rounded-l-md animate-pulse"></div>' : ''}
                         
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="flex-1 pr-2">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="flex-1 pr-1">
                                 <h4 class="text-xs font-semibold text-gray-800 flex items-center gap-1 ${isC ? 'line-through text-gray-400' : ''}">
-                                    ${getCritIcon(item.crit)} ${i+1}. ${item.title}
+                                    ${getCritIcon(item.crit)} ${item.title}
                                 </h4>
                                 <p class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
                                     <i class="ph-fill ph-user"></i> ${item.resp || 'Sem responsável'}
                                 </p>
-                                ${item.obs ? `<p class="text-[10px] text-gray-600 mt-1 italic leading-tight border-l-2 border-gray-200 pl-1.5">${item.obs}</p>` : ''}
+                                ${item.obs ? `<p class="text-[9px] text-gray-600 mt-1 italic leading-tight border-l-2 border-gray-200 pl-1.5">${item.obs}</p>` : ''}
                             </div>
                             <div class="flex flex-col items-end gap-1 shrink-0">
-                                <span class="text-[9px] px-1.5 py-0.5 rounded ${isC ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'} whitespace-nowrap">
+                                <span class="text-[9px] px-1 py-0.5 rounded ${isC ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'} whitespace-nowrap">
                                     ${dateToShow}
                                 </span>
-                                ${item.link ? `<button onclick="event.stopPropagation(); window.open('${item.link}', '_blank')" class="text-[9px] text-gov-blue hover:underline flex items-center gap-1 mt-1 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 transition hover:bg-blue-100"><i class="ph-bold ph-link"></i> Acessar</button>` : ''}
+                                ${item.link ? `<button onclick="event.stopPropagation(); window.open('${item.link}', '_blank')" class="text-[9px] text-gov-blue hover:underline flex items-center gap-1 mt-1 bg-blue-50 px-1 py-0.5 rounded border border-blue-100 transition hover:bg-blue-100"><i class="ph-bold ph-link"></i> Acessar</button>` : ''}
                             </div>
                         </div>
                     </div>
@@ -620,22 +757,25 @@
         }
 
         const shortNames = {
-            1: "1ª Reunião", 2: "2ª Reunião", 3: "DFD", 4: "PCA", 5: "EPC", 6: "ETP", 7: "Mapa/TR", 8: "CONJUR",
-            9: "Edital", 10: "Sessão", 11: "Habilitação", 12: "Homologação",
-            13: "Assinatura", 14: "Reunião", 15: "1ª OS", 16: "IMR"
+            1: "1ª Reunião", 2: "2ª Reunião", 3: "DFD", 4: "PCA", 5: "Aprov. PCA/EPC",
+            6: "ETP/Pesquisa", 7: "TR/Mapa", 8: "CONJUR", 9: "Aprovação",
+            10: "Edital PNCP", 11: "Sessão", 12: "Julgamento", 13: "Homologação",
+            14: "Assinatura", 15: "Operação"
         };
 
         function renderGauges() {
-            for (let fase = 1; fase <= 3; fase++) {
+            for (let fase = 1; fase <= 4; fase++) {
                 const itensFase = milestones.filter(m => m.phase === fase);
                 const concluidos = itensFase.filter(m => m.status === 'completed').length;
                 const total = itensFase.length;
                 const percentual = total === 0 ? 0 : Math.round((concluidos / total) * 100);
 
-                document.getElementById(`percFase${fase}`).innerText = `${percentual}%`;
-                document.getElementById(`fracFase${fase}`).innerText = `${concluidos}/${total} Concluídos`;
+                const percElement = document.getElementById(`percFase${fase}`);
+                if (percElement) {
+                    percElement.innerText = `${percentual}%`;
+                    document.getElementById(`fracFase${fase}`).innerText = `${concluidos}/${total} Concluídos`;
+                }
 
-                // Renderização dinâmica dos textos da fase com cores de status
                 const textContainer = document.getElementById(`fase${fase}-items`);
                 if (textContainer) {
                     textContainer.innerHTML = itensFase.map((m, idx) => {
@@ -649,10 +789,11 @@
                     }).join(' ');
                 }
 
-                const ctx = document.getElementById(`gaugeFase${fase}`).getContext('2d');
+                const canvasElement = document.getElementById(`gaugeFase${fase}`);
+                if (!canvasElement) continue;
+                const ctx = canvasElement.getContext('2d');
                 if (gaugeInstances[fase]) gaugeInstances[fase].destroy();
 
-                // Escala de cor dinâmica: de Vermelho (0) a Verde (120) no espectro de Hue (Matiz)
                 const hue = Math.round((percentual / 100) * 120);
                 const color = `hsl(${hue}, 75%, 40%)`; 
 
@@ -793,7 +934,7 @@
                         eventosHtml += `
                             <div class="cal-event ${styleClass}" onclick="abrirModal(${index})">
                                 ${getCritIcon(m.crit)}
-                                <span class="truncate">${m.title}</span>
+                                <span class="truncate" title="${m.title}">${m.title.split('-')[0]}</span>
                             </div>
                         `;
                     }
