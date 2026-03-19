@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jornada de Contratação TIC | Monitorização (V4.0)</title>
+    <title>Monitoramento PSG "Fábrica de Dados" - MT</title>
     
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -108,20 +108,27 @@
         
         .gauge-container { position: relative; width: 100%; height: 120px; display: flex; justify-content: center; }
         .gauge-text { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; }
+        
+        /* Banner Header com Overlay para garantir a legibilidade */
+        .header-banner {
+            background-image: linear-gradient(to right, rgba(0, 51, 102, 0.95) 30%, rgba(0, 51, 102, 0.4) 100%), url('https://i1.sndcdn.com/visuals-001237818775-DCJ4xw-t1240x260.jpg');
+            background-size: cover;
+            background-position: center right;
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Cabeçalho -->
-    <header class="bg-gov-dark text-white shadow-md z-10 shrink-0">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-            <i class="ph-fill ph-chart-polar text-4xl text-gov-yellow"></i>
+    <!-- Cabeçalho com Imagem -->
+    <header class="header-banner text-white shadow-md z-10 shrink-0 border-b-4 border-gov-yellow">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex items-center gap-5 relative z-10">
+            <i class="ph-fill ph-chart-polar text-5xl text-gov-yellow drop-shadow-md"></i>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">Jornada de Contratação TIC: Engenharia de Dados & BI</h1>
-                <p class="text-xs text-blue-200 mt-1">Gestão por Fases e Performance (IN SGD/ME nº 94/2022 | Lei nº 14.133/2021)</p>
+                <h1 class="text-2xl font-bold tracking-tight drop-shadow-md">Monitoramento PSG "Fábrica de Dados" - MT</h1>
+                <p class="text-xs text-blue-100 mt-1 drop-shadow-md font-medium">Gestão por Fases e Performance (IN SGD/ME nº 94/2022 | Lei nº 14.133/2021)</p>
             </div>
             <div class="ml-auto flex gap-4">
-                <button onclick="limparDados()" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded-md transition text-white border border-white/20 flex items-center gap-2">
+                <button onclick="limparDados()" class="px-3 py-1.5 text-xs bg-gov-dark/50 backdrop-blur-sm hover:bg-gov-dark/80 rounded-md transition text-white border border-white/20 flex items-center gap-2 shadow-sm">
                     <i class="ph ph-trash"></i> Reiniciar
                 </button>
             </div>
@@ -135,7 +142,7 @@
         <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0">
             <div class="flex justify-between items-end mb-1.5 px-1">
                 <span class="text-xs font-bold text-gray-700 uppercase flex items-center gap-1">
-                    <i class="ph-bold ph-sliders-horizontal text-gov-blue"></i> Cronógrafo de Avanço Global
+                    <i class="ph-bold ph-sliders-horizontal text-gov-blue"></i> Avanço Global
                 </span>
                 <span id="cronoPercent" class="text-xs font-bold text-gov-blue">0%</span>
             </div>
@@ -148,7 +155,7 @@
         <section class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-base font-bold text-gov-dark flex items-center gap-2">
-                    <i class="ph ph-trend-up text-lg"></i> Velocidade da Contratação (Progresso Acumulado)
+                    <i class="ph ph-trend-up text-lg"></i> Progresso da Contratação
                 </h2>
                 <div class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full flex gap-3">
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Planejado</span>
@@ -232,7 +239,7 @@
             <aside class="xl:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px]">
                 <div class="p-4 border-b border-gray-100 bg-gov-dark text-white rounded-t-xl flex justify-between items-center shrink-0">
                     <h2 class="text-sm font-bold flex items-center gap-2">
-                        <i class="ph-bold ph-list-checks text-lg"></i> Checkpoints Rápidos
+                        <i class="ph-bold ph-list-checks text-lg"></i> Checkpoints
                     </h2>
                     <span id="progressoGeral" class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded">0/16</span>
                 </div>
@@ -343,18 +350,22 @@
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. CONFIGURAÇÃO FIREBASE E AUTENTICAÇÃO ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyC8_R9LXc6WSbbf18eTX3zvTHlG9yDVqy0",
-          authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
-          projectId: "monitoramento-psg-dados-mt",
-          storageBucket: "monitoramento-psg-dados-mt.firebasestorage.app",
-          messagingSenderId: "676956978620",
-          appId: "1:676956978620:web:756a5d490dfec92689ffb9"
+        
+        // ⚠️ Configuração Dinâmica: Usa o ambiente de pré-visualização ou as suas credenciais manuais (GitHub Pages)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyB1Eq9v92BeW1an8E6A7SAFfkSDDCLnEEY", 
+            authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
+            projectId: "monitoramento-psg-dados-mt",
+            storageBucket: "monitoramento-psg-dados-mt.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcde"
         };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dashboard-transportes';
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         let currentUser = null;
         let docRef = null;
@@ -382,22 +393,22 @@
         const HOJE_STR = "2026-03-20"; 
 
         const BASE_DATA = [
-            { id: 1, phase: 1, title: "1ª Reunião de GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
-            { id: 2, phase: 1, title: "2ª Reunião de GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
-            { id: 3, phase: 1, title: "Criação do DFD", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
-            { id: 4, phase: 1, title: "Alteração PCA 2026", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
-            { id: 5, phase: 1, title: "Portaria EPC", orig: "2026-03-27", crit: "medium", resp: "", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 6, phase: 1, title: "Finalização ETP-TIC", orig: "2026-04-24", crit: "medium", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 7, phase: 1, title: "Mapa de Riscos e TR", orig: "2026-05-22", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 8, phase: 1, title: "Parecer CONJUR", orig: "2026-06-05", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 9, phase: 2, title: "Publicação do Edital", orig: "2026-06-15", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 10, phase: 2, title: "Sessão Pública/Julgamento", orig: "2026-07-02", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 11, phase: 2, title: "Habilitação", orig: "2026-07-16", crit: "medium", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 12, phase: 2, title: "Homologação", orig: "2026-07-25", crit: "high", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 13, phase: 3, title: "Assinatura Contrato", orig: "2026-08-05", crit: "high", resp: "Integrante Administrativo", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 14, phase: 3, title: "Reunião Inicial", orig: "2026-08-12", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 15, phase: 3, title: "Emissão 1ª OS", orig: "2026-08-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 16, phase: 3, title: "Monitoramento IMR", orig: "2026-09-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" }
+            { id: 1, phase: 1, title: "F1.1 - 1ª Reunião de GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
+            { id: 2, phase: 1, title: "F1.2 - 2ª Reunião de GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 3, phase: 1, title: "F1.3 - Criação do DFD", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 4, phase: 1, title: "F1.4 - Alteração PCA 2026", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 5, phase: 1, title: "F1.5 - Portaria EPC", orig: "2026-03-27", crit: "medium", resp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 6, phase: 1, title: "F1.6 - Finalização ETP-TIC", orig: "2026-04-24", crit: "medium", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 7, phase: 1, title: "F1.7 - Mapa de Riscos e TR", orig: "2026-05-22", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 8, phase: 1, title: "F1.8 - Parecer CONJUR", orig: "2026-06-05", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 9, phase: 2, title: "F2.1 - Publicação do Edital", orig: "2026-06-15", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 10, phase: 2, title: "F2.2 - Sessão Pública/Julgamento", orig: "2026-07-02", crit: "high", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 11, phase: 2, title: "F2.3 - Habilitação", orig: "2026-07-16", crit: "medium", resp: "CPL / Pregoeiro", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 12, phase: 2, title: "F2.4 - Homologação", orig: "2026-07-25", crit: "high", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 13, phase: 3, title: "F3.1 - Assinatura Contrato", orig: "2026-08-05", crit: "high", resp: "Integrante Administrativo", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 14, phase: 3, title: "F3.2 - Reunião Inicial", orig: "2026-08-12", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 15, phase: 3, title: "F3.3 - Emissão 1ª OS", orig: "2026-08-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 16, phase: 3, title: "F3.4 - Monitoramento IMR", orig: "2026-09-20", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" }
         ];
 
         let milestones = [];
@@ -424,15 +435,12 @@
         function setupSync() {
             if (!currentUser) return;
             
-            // Regra 1: Guardar num caminho público para toda a equipa aceder
             docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones');
 
-            // Escutar alterações na nuvem em tempo real
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     milestones = docSnap.data().milestones;
                 } else {
-                    // Inicializa a base de dados se estiver vazia
                     milestones = JSON.parse(JSON.stringify(BASE_DATA));
                     setDoc(docRef, { milestones: milestones }).catch(e => console.error(e));
                 }
@@ -443,7 +451,7 @@
             });
         }
 
-        // Funções Globais expostas para o HTML (onClick)
+        // --- EXPOSIÇÃO GLOBAL DE FUNÇÕES ---
         window.limparDados = () => {
             if (!currentUser || !docRef) return;
             const resetData = JSON.parse(JSON.stringify(BASE_DATA));
@@ -515,7 +523,6 @@
 
             window.fecharModal();
 
-            // Gravar alterações no Firestore (sincroniza automaticamente)
             if (currentUser && docRef) {
                 setDoc(docRef, { milestones: milestones }).catch(e => console.error("Erro ao gravar:", e));
             }
@@ -532,7 +539,6 @@
                     let dataBaseStr = ant.status === 'completed' ? ant.executedDate : 
                         ((strToDate(ant.projectedDate) < strToDate(HOJE_STR)) ? HOJE_STR : ant.projectedDate);
                     
-                    // Encontra a diferença em dias entre a data original da tarefa atual e a anterior
                     const diffDiasOriginais = Math.round((strToDate(atual.orig) - strToDate(ant.orig)) / (1000*60*60*24));
                     atual.projectedDate = addDays(dataBaseStr, diffDiasOriginais >= 0 ? diffDiasOriginais : 0);
                 }
@@ -708,7 +714,22 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                            callbacks: {
+                                afterTitle: function(context) {
+                                    const dataIndex = context[0].dataIndex;
+                                    const dataReal = timeline[dataIndex];
+                                    let info = [];
+                                    milestones.forEach(m => {
+                                        if (m.orig === dataReal) info.push(`📍 Previsto: ${m.title}`);
+                                        if (m.status === 'completed' && m.executedDate === dataReal) info.push(`✅ Concluído: ${m.title}`);
+                                    });
+                                    return info.length ? '\n' + info.join('\n') : '';
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: {
@@ -770,7 +791,6 @@
             for (let i = 0; i < restos; i++) { grid.innerHTML += `<div class="calendar-cell empty"></div>`; }
         }
 
-        // Iniciar Autenticação (O processo aciona o Sincronizador Firebase em sequência)
         initAuth();
 
     </script>
