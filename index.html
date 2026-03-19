@@ -172,7 +172,7 @@
             <!-- Fase 1 -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
                 <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-file-text text-gov-blue"></i> Fase 1: Planejamento</h3>
-                <p class="text-[10px] text-gray-500 mb-4 text-center">DFD, PCA, EPC, ETP, Mapa e TR</p>
+                <p id="fase1-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase1"></canvas>
                     <div class="gauge-text">
@@ -184,7 +184,7 @@
             <!-- Fase 2 -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
                 <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-gavel text-gov-blue"></i> Fase 2: Seleção</h3>
-                <p class="text-[10px] text-gray-500 mb-4 text-center">Edital, Sessão, Habilitação e Homologação</p>
+                <p id="fase2-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase2"></canvas>
                     <div class="gauge-text">
@@ -196,7 +196,7 @@
             <!-- Fase 3 -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col items-center">
                 <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><i class="ph-fill ph-folder-open text-gov-blue"></i> Fase 3: Gestão</h3>
-                <p class="text-[10px] text-gray-500 mb-4 text-center">Assinatura, Reunião, 1ª OS e IMR</p>
+                <p id="fase3-items" class="text-[10px] mb-4 text-center leading-tight"></p>
                 <div class="gauge-container">
                     <canvas id="gaugeFase3"></canvas>
                     <div class="gauge-text">
@@ -619,6 +619,12 @@
             document.getElementById('cronoPercent').innerText = `${perc}% Concluído`;
         }
 
+        const shortNames = {
+            1: "1ª Reunião", 2: "2ª Reunião", 3: "DFD", 4: "PCA", 5: "EPC", 6: "ETP", 7: "Mapa/TR", 8: "CONJUR",
+            9: "Edital", 10: "Sessão", 11: "Habilitação", 12: "Homologação",
+            13: "Assinatura", 14: "Reunião", 15: "1ª OS", 16: "IMR"
+        };
+
         function renderGauges() {
             for (let fase = 1; fase <= 3; fase++) {
                 const itensFase = milestones.filter(m => m.phase === fase);
@@ -629,11 +635,26 @@
                 document.getElementById(`percFase${fase}`).innerText = `${percentual}%`;
                 document.getElementById(`fracFase${fase}`).innerText = `${concluidos}/${total} Concluídos`;
 
+                // Renderização dinâmica dos textos da fase com cores de status
+                const textContainer = document.getElementById(`fase${fase}-items`);
+                if (textContainer) {
+                    textContainer.innerHTML = itensFase.map((m, idx) => {
+                        let colorClass = 'text-gov-blue'; 
+                        if (m.status === 'completed') colorClass = 'text-gov-green font-bold';
+                        else if (m.isLate) colorClass = 'text-gov-red font-bold animate-pulse';
+
+                        const sName = shortNames[m.id] || m.title;
+                        const separator = idx < itensFase.length - 1 ? '<span class="text-gray-300 mx-0.5">,</span>' : '';
+                        return `<span class="${colorClass} transition-colors duration-300" title="${m.title}">${sName}</span>${separator}`;
+                    }).join(' ');
+                }
+
                 const ctx = document.getElementById(`gaugeFase${fase}`).getContext('2d');
                 if (gaugeInstances[fase]) gaugeInstances[fase].destroy();
 
-                let color = '#2670e8'; 
-                if (percentual === 100) color = '#168821'; 
+                // Escala de cor dinâmica: de Vermelho (0) a Verde (120) no espectro de Hue (Matiz)
+                const hue = Math.round((percentual / 100) * 120);
+                const color = `hsl(${hue}, 75%, 40%)`; 
 
                 gaugeInstances[fase] = new Chart(ctx, {
                     type: 'doughnut',
