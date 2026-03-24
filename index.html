@@ -94,16 +94,14 @@
             font-size: 0.7rem;
             padding: 4px 6px;
             border-radius: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             border-left: 3px solid transparent;
             display: flex;
-            align-items: center;
-            gap: 4px;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+            width: 100%;
         }
         .cal-event:hover { filter: brightness(0.95); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .event-completed { background-color: #dcfce7; color: #166534; border-left-color: #16a34a; }
@@ -137,30 +135,56 @@
     <!-- Estrutura Principal -->
     <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
         
-        <!-- Novos Contadores de Prazo -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Novos Contadores de Prazo e Info SEI -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Cartão: Processo SEI & Equipa -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
+                <div class="bg-purple-50 p-3 rounded-lg text-purple-600">
+                    <i class="ph-fill ph-folder-open text-3xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Processos SEI & Equipe</h3>
+                        <button onclick="abrirModalSEI()" title="Editar Processos SEI" class="text-gray-400 hover:text-gov-blue transition"><i class="ph-bold ph-pencil-simple"></i></button>
+                    </div>
+                    <div class="flex flex-col mt-1 gap-1">
+                        <div id="displaySEI" class="text-sm font-bold text-gray-800 tracking-tight flex flex-col gap-0.5">Sem número SEI</div>
+                        <div class="flex items-start gap-1 mt-1">
+                            <i class="ph-fill ph-users text-gray-400 mt-0.5 text-xs"></i>
+                            <span id="displayGT" class="text-[10px] text-gray-500 font-medium leading-tight line-clamp-2" title="Adicione nomes nos entregáveis para que apareçam aqui">Nenhum membro registado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cartão: Prazo Final -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
                 <div class="bg-blue-50 p-3 rounded-lg text-gov-blue">
                     <i class="ph-fill ph-flag-checkered text-3xl"></i>
                 </div>
                 <div>
                     <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Dias até o Prazo Final</h3>
-                    <div class="flex items-baseline gap-2">
-                        <span id="diasPrazoFinal" class="text-2xl font-black text-gov-dark">--</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span id="diasPrazoFinal" class="text-2xl font-black text-gov-dark leading-none">--</span>
                         <span class="text-xs text-gray-500 font-medium">Dias (01/07/2026)</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Cartão: Próxima Entrega -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
                 <div class="bg-yellow-50 p-3 rounded-lg text-yellow-600" id="iconeProxEntrega">
                     <i class="ph-fill ph-clock-countdown text-3xl"></i>
                 </div>
-                <div>
+                <div class="flex-1 min-w-0">
                     <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Dias até a Próxima Entrega</h3>
-                    <div class="flex items-baseline gap-2">
-                        <span id="diasProximaEntrega" class="text-2xl font-black text-yellow-700">--</span>
-                        <span id="nomeProximaEntrega" class="text-[10px] text-gray-500 font-medium truncate max-w-[150px] sm:max-w-[200px]">--</span>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="diasProximaEntrega" class="text-2xl font-black text-yellow-700 leading-none">--</span>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <span id="nomeProximaEntrega" class="text-[11px] text-gray-700 font-bold truncate leading-tight">--</span>
+                            <span id="respProximaEntrega" class="text-[10px] text-gov-blue font-semibold truncate bg-blue-50 px-1.5 py-0.5 rounded inline-block w-max mt-0.5">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -172,7 +196,7 @@
                 <span class="text-xs font-bold text-gray-700 uppercase flex items-center gap-1">
                     <i class="ph-bold ph-sliders-horizontal text-gov-blue"></i> Avanço Global
                 </span>
-                <span id="cronoPercent" class="text-xs font-bold text-gov-blue">0%</span>
+                <span id="cronoPercent" class="text-xs font-bold transition-colors duration-300">0%</span>
             </div>
             <div id="cronografoContainer" class="flex w-full h-3 bg-gray-100 rounded-full overflow-hidden gap-0.5">
                 <!-- Barras injetadas via JS -->
@@ -254,7 +278,7 @@
             <section class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px]">
                 <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-xl shrink-0">
                     <h2 class="text-base font-bold text-gov-dark flex items-center gap-2">
-                        <i class="ph ph-calendar-blank text-lg"></i> Calendário de Metas (Click-to-Edit)
+                        <i class="ph ph-calendar-blank text-lg"></i> Calendário de Metas (Click para Editar ou "+")
                     </h2>
                     <div class="flex items-center gap-4">
                         <button onclick="mudarMes(-1)" class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition"><i class="ph-bold ph-caret-left"></i></button>
@@ -340,11 +364,11 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="modalContent">
             
             <div class="p-5 border-b border-gray-100 flex justify-between items-start">
-                <div>
-                    <span id="modalFaseBadge" class="text-[10px] font-bold tracking-wider uppercase bg-gray-100 text-gray-600 px-2 py-0.5 rounded mb-2 inline-block">Fase</span>
-                    <h2 id="modalTitulo" class="text-lg font-bold text-gray-800 leading-tight">Nome do Entregável</h2>
+                <div class="w-full pr-4">
+                    <!-- Input para editar o Título de forma limpa -->
+                    <input type="text" id="modalTituloInput" class="text-lg font-bold text-gray-800 leading-tight bg-transparent border-b border-transparent hover:border-gray-300 focus:border-gov-blue focus:outline-none w-full transition-colors pb-1" placeholder="Ex: Enviar ofício indicando a EPC">
                 </div>
-                <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 rounded-full p-1.5">
+                <button type="button" onclick="fecharModal()" class="text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 shrink-0">
                     <i class="ph-bold ph-x"></i>
                 </button>
             </div>
@@ -352,32 +376,64 @@
             <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
                 <input type="hidden" id="modalIndex">
                 
-                <!-- Responsável (Papéis EPC) -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Responsável (Papel EPC)</label>
-                    <select id="modalResp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition bg-white cursor-pointer">
-                        <option value="">Selecione o Responsável...</option>
-                        <option value="Integrante Técnico">Integrante Técnico (EPC)</option>
-                        <option value="Integrante Requisitante">Integrante Requisitante (EPC)</option>
-                        <option value="Integrante Administrativo">Integrante Administrativo (EPC)</option>
-                        <option value="SGETI / Gestor">SGETI / Gestor</option>
-                        <option value="CONJUR">CONJUR</option>
-                        <option value="CPL / Pregoeiro">CPL / Pregoeiro</option>
-                        <option value="Autoridade Competente">Autoridade Competente</option>
-                        <option value="Gestor / Contratada">Gestor / Contratada</option>
-                        <option value="Gestor / Fiscais">Gestor / Fiscais</option>
-                        <option value="Autoridade Superior">Autoridade Superior</option>
-                        <option value="Área de Licitações">Área de Licitações</option>
-                        <option value="Agente Contratação">Agente Contratação</option>
-                    </select>
+                <!-- Fase e Data Planejada -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Fase do Metaprocesso</label>
+                        <select id="modalFaseSelect" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition bg-white cursor-pointer">
+                            <option value="1">Fase 1: Governança</option>
+                            <option value="2">Fase 2: Planejamento</option>
+                            <option value="3">Fase 3: Seleção</option>
+                            <option value="4">Fase 4: Gestão</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Data Planejada Inicial</label>
+                        <input type="date" id="modalDataOrig" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Responsável (Papéis EPC) e Nome Pessoal -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Papel EPC</label>
+                        <input type="text" id="modalResp" list="listaPapeis" placeholder="Selecione ou digite um papel..." class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition bg-white">
+                        <datalist id="listaPapeis">
+                            <option value="Integrante Técnico (EPC)">
+                            <option value="Integrante Requisitante (EPC)">
+                            <option value="Integrante Administrativo (EPC)">
+                            <option value="SGETI / Gestor">
+                            <option value="CONJUR">
+                            <option value="CPL / Pregoeiro">
+                            <option value="Autoridade Competente">
+                            <option value="Gestor / Contratada">
+                            <option value="Gestor / Fiscais">
+                            <option value="Autoridade Superior">
+                            <option value="Área de Licitações">
+                            <option value="Agente Contratação">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nome do Responsável</label>
+                        <input type="text" id="modalNomeResp" placeholder="Ex: João Silva" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                    </div>
                 </div>
 
                 <!-- Link do Artefato -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Link do Artefato (SEI / Drive)</label>
-                    <div class="relative">
-                        <i class="ph ph-link absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="url" id="modalLink" placeholder="https://..." class="w-full text-sm border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Link Minuta (Drive / SEI)</label>
+                        <div class="relative">
+                            <i class="ph ph-link absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="url" id="modalLink" placeholder="https://..." class="w-full text-sm border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Link Oficial (SEI)</label>
+                        <div class="relative">
+                            <i class="ph ph-link absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="url" id="modalLinkOficial" placeholder="https://sei..." class="w-full text-sm border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
                     </div>
                 </div>
 
@@ -426,9 +482,70 @@
                 </div>
             </div>
 
+            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3 items-center">
+                <button type="button" id="btnExcluir" onclick="excluirModal()" class="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition mr-auto hidden">Excluir</button>
+                <button type="button" onclick="fecharModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancelar</button>
+                <button type="button" onclick="salvarModal()" class="px-5 py-2 text-sm font-bold text-white bg-gov-blue hover:bg-gov-dark rounded-lg transition shadow-sm">Guardar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Novo Modal para Editar Processo SEI -->
+    <div id="seiModal" class="fixed inset-0 bg-gov-dark/60 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="seiModalContent">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-base font-bold text-gray-800 flex items-center gap-2"><i class="ph-fill ph-folder-open text-gov-blue"></i> Processos SEI</h2>
+                <button type="button" onclick="fecharModalSEI()" class="text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 rounded-full p-1.5">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <h4 class="text-xs font-bold text-gray-700 mb-2">Processo 1</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Número do Processo</label>
+                            <input type="text" id="seiNumero1" placeholder="Ex: 00000.000000/0000-00" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Descrição ou Link de Acesso</label>
+                            <input type="text" id="seiDesc1" placeholder="Descrição curta ou https://..." class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <h4 class="text-xs font-bold text-gray-700 mb-2">Processo 2</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Número do Processo</label>
+                            <input type="text" id="seiNumero2" placeholder="Ex: 00000.000000/0000-00" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Descrição ou Link de Acesso</label>
+                            <input type="text" id="seiDesc2" placeholder="Descrição curta ou https://..." class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3">
-                <button onclick="fecharModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancelar</button>
-                <button onclick="salvarModal()" class="px-5 py-2 text-sm font-bold text-white bg-gov-blue hover:bg-gov-dark rounded-lg transition shadow-sm">Guardar Alterações</button>
+                <button type="button" onclick="fecharModalSEI()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancelar</button>
+                <button type="button" onclick="salvarModalSEI()" class="px-5 py-2 text-sm font-bold text-white bg-gov-blue hover:bg-gov-dark rounded-lg transition shadow-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="confirmModal" class="fixed inset-0 bg-gov-dark/70 backdrop-blur-sm flex items-center justify-center z-[60] hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 transform scale-95 transition-transform duration-300 text-center" id="confirmModalContent">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i class="ph-bold ph-trash text-xl text-gov-red"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Excluir Entregável</h3>
+            <p class="text-sm text-gray-600 mb-6">Tem a certeza que deseja excluir permanentemente esta etapa? O cronograma será recalculado.</p>
+            <div class="flex justify-center gap-3">
+                <button type="button" onclick="fecharConfirmacao()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition w-full">Cancelar</button>
+                <button type="button" onclick="executarExclusao()" class="px-4 py-2 text-sm font-bold text-white bg-gov-red hover:bg-red-700 rounded-lg transition shadow-sm w-full">Sim, Excluir</button>
             </div>
         </div>
     </div>
@@ -440,12 +557,12 @@
 
         // --- 1. CONFIGURAÇÃO FIREBASE E AUTENTICAÇÃO ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-              apiKey: "AIzaSyC8_R9LXc6WSbbf18eTX3zvTHlG9yDVqy0",
-              authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
-              projectId: "monitoramento-psg-dados-mt",
-              storageBucket: "monitoramento-psg-dados-mt.firebasestorage.app",
-              messagingSenderId: "676956978620",
-              appId: "1:676956978620:web:756a5d490dfec92689ffb9"
+            apiKey: "AIzaSyC8_R9LXc6WSbbf18eTX3zvTHlG9yDVqy0", 
+            authDomain: "monitoramento-psg-dados-mt.firebaseapp.com",
+            projectId: "monitoramento-psg-dados-mt",
+            storageBucket: "monitoramento-psg-dados-mt.appspot.com",
+            messagingSenderId: "676956978620",
+            appId: "1:676956978620:web:756a5d490dfec92689ffb9"
         };
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'dashboard-transportes';
@@ -476,40 +593,40 @@
             }
         });
 
-        // --- 2. DADOS INICIAIS (BASE_DATA - NOVO CRONOGRAMA "FAST-TRACK") ---
-        const HOJE_STR = "2026-03-19"; 
+        // --- 2. DADOS INICIAIS E VARIÁVEIS GLOBAIS ---
+        const hojeDataObj = new Date();
+        const HOJE_STR = `${hojeDataObj.getFullYear()}-${String(hojeDataObj.getMonth() + 1).padStart(2, '0')}-${String(hojeDataObj.getDate()).padStart(2, '0')}`;
+        
+        let processoSEI1 = "";
+        let descSEI1 = "";
+        let processoSEI2 = "";
+        let descSEI2 = "";
 
         const BASE_DATA = [
-            // Fase 1: Governança
-            { id: 1, phase: 1, title: "F1.1 - 1ª Reunião do GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
-            { id: 2, phase: 1, title: "F1.2 - 2ª Reunião do GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
-            { id: 3, phase: 1, title: "F1.3 - Inserção do DFD", orig: "2026-03-16", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
-            { id: 4, phase: 1, title: "F1.4 - Formulário PCA", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
-            { id: 5, phase: 1, title: "F1.5 - Aprov. PCA e EPC", orig: "2026-03-27", crit: "high", resp: "Autoridade Competente", status: "pending", executedDate: null, link: "", obs: "Aprovação é condição sine qua non" },
-            
-            // Fase 2: Planejamento
-            { id: 6, phase: 2, title: "F2.1 - ETP-TIC e Pesquisa", orig: "2026-04-17", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 7, phase: 2, title: "F2.2 - TR e Mapa de Riscos", orig: "2026-05-08", crit: "high", resp: "Integrante Técnico", status: "pending", executedDate: null, link: "", obs: "Adotar Portaria SGD/MGI nº 750/2023" },
-            { id: 8, phase: 2, title: "F2.3 - Parecer CONJUR", orig: "2026-05-22", crit: "high", resp: "CONJUR", status: "pending", executedDate: null, link: "", obs: "Apenas 10 dias úteis reservados" },
-            { id: 9, phase: 2, title: "F2.4 - Aprov. SGETI/EPC", orig: "2026-05-29", crit: "medium", resp: "SGETI / Gestor", status: "pending", executedDate: null, link: "", obs: "" },
-            
-            // Fase 3: Seleção
-            { id: 10, phase: 3, title: "F3.1 - Edital no PNCP", orig: "2026-06-01", crit: "high", resp: "Área de Licitações", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 11, phase: 3, title: "F3.2 - Sessão Pública", orig: "2026-06-15", crit: "medium", resp: "Agente Contratação", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 12, phase: 3, title: "F3.3 - Julgamento/Habilitação", orig: "2026-06-26", crit: "medium", resp: "Agente Contratação", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 13, phase: 3, title: "F3.4 - Homologação", orig: "2026-07-01", crit: "high", resp: "Autoridade Superior", status: "pending", executedDate: null, link: "", obs: "Data limite final da Seleção" },
-            
-            // Fase 4: Gestão
-            { id: 14, phase: 4, title: "F4.1 - Assinatura Contrato", orig: "2026-07-06", crit: "high", resp: "Gestor / Contratada", status: "pending", executedDate: null, link: "", obs: "" },
-            { id: 15, phase: 4, title: "F4.2 - Início Operação (Transição)", orig: "2026-07-09", crit: "high", resp: "Gestor / Fiscais", status: "pending", executedDate: null, link: "", obs: "Encerramento do contrato da First" }
+            { id: 1, phase: 1, title: "1ª Reunião do GT", orig: "2026-03-09", crit: "low", resp: "SGETI / Gestor", nomeResp: "", status: "completed", executedDate: "2026-03-09", link: "", obs: "" },
+            { id: 2, phase: 1, title: "2ª Reunião do GT", orig: "2026-03-16", crit: "low", resp: "SGETI / Gestor", nomeResp: "", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 3, phase: 1, title: "Inserção do DFD", orig: "2026-03-16", crit: "high", resp: "Integrante Requisitante", nomeResp: "", status: "completed", executedDate: "2026-03-16", link: "", obs: "" },
+            { id: 4, phase: 1, title: "Formulário PCA", orig: "2026-03-17", crit: "high", resp: "Integrante Requisitante", nomeResp: "", status: "completed", executedDate: "2026-03-17", link: "", obs: "" },
+            { id: 5, phase: 1, title: "Aprov. PCA e EPC", orig: "2026-03-27", crit: "high", resp: "Autoridade Competente", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "Aprovação é condição sine qua non" },
+            { id: 6, phase: 2, title: "ETP-TIC e Pesquisa", orig: "2026-04-17", crit: "high", resp: "Integrante Técnico", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 7, phase: 2, title: "TR e Mapa de Riscos", orig: "2026-05-08", crit: "high", resp: "Integrante Técnico", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "Adotar Portaria SGD/MGI nº 750/2023" },
+            { id: 8, phase: 2, title: "Parecer CONJUR", orig: "2026-05-22", crit: "high", resp: "CONJUR", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "Apenas 10 dias úteis reservados" },
+            { id: 9, phase: 2, title: "Aprov. SGETI/EPC", orig: "2026-05-29", crit: "medium", resp: "SGETI / Gestor", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 10, phase: 3, title: "Edital no PNCP", orig: "2026-06-01", crit: "high", resp: "Área de Licitações", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 11, phase: 3, title: "Sessão Pública", orig: "2026-06-15", crit: "medium", resp: "Agente Contratação", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 12, phase: 3, title: "Julgamento/Habilitação", orig: "2026-06-26", crit: "medium", resp: "Agente Contratação", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 13, phase: 3, title: "Homologação", orig: "2026-07-01", crit: "high", resp: "Autoridade Superior", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "Data limite final da Seleção" },
+            { id: 14, phase: 4, title: "Assinatura Contrato", orig: "2026-07-06", crit: "high", resp: "Gestor / Contratada", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "" },
+            { id: 15, phase: 4, title: "Início Operação (Transição)", orig: "2026-07-09", crit: "high", resp: "Gestor / Fiscais", nomeResp: "", status: "pending", executedDate: null, link: "", obs: "Encerramento do contrato da First" }
         ];
 
         let milestones = [];
         let graficoLinhaInstance = null;
         let gaugeInstances = { 1: null, 2: null, 3: null, 4: null };
+        let countdownInterval = null;
 
-        let mesAtual = 2; // Março (0-index)
-        let anoAtual = 2026;
+        let mesAtual = hojeDataObj.getMonth();
+        let anoAtual = hojeDataObj.getFullYear();
         const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -529,20 +646,46 @@
             return '<i class="ph-fill ph-circle text-green-500"></i>';
         };
 
-        // --- 3. SINCRONIZAÇÃO EM TEMPO REAL (FIRESTORE) ---
+        // --- 3. SINCRONIZAÇÃO EM TEMPO REAL E MOTOR DE REORDENAÇÃO ---
+        window.reordenarERenumerar = () => {
+            milestones.sort((a, b) => {
+                if (a.phase !== b.phase) return a.phase - b.phase;
+                return strToDate(a.orig) - strToDate(b.orig);
+            });
+
+            let contadores = { 1: 1, 2: 1, 3: 1, 4: 1 };
+            
+            milestones.forEach(m => {
+                let tituloLimpo = m.title.replace(/^F\d+\.\d+\s*-\s*/, '');
+                m.title = `F${m.phase}.${contadores[m.phase]} - ${tituloLimpo}`;
+                contadores[m.phase]++;
+            });
+        };
+
         function setupSync() {
             if (!currentUser) return;
             
-            // Alterado caminho do documento para "milestones_fast_track" para resetar automaticamente a base com as novas datas
-            docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones_fast_track');
+            docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard_state', 'milestones_fast_track_v3');
 
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    milestones = docSnap.data().milestones;
+                    const data = docSnap.data();
+                    milestones = data.milestones || [];
+                    
+                    processoSEI1 = data.sei1 !== undefined ? data.sei1 : (data.sei || "");
+                    descSEI1 = data.desc1 !== undefined ? data.desc1 : (data.seiLink || "");
+                    processoSEI2 = data.sei2 || "";
+                    descSEI2 = data.desc2 || "";
                 } else {
                     milestones = JSON.parse(JSON.stringify(BASE_DATA));
-                    setDoc(docRef, { milestones: milestones }).catch(e => console.error(e));
+                    processoSEI1 = "";
+                    descSEI1 = "";
+                    processoSEI2 = "";
+                    descSEI2 = "";
+                    window.reordenarERenumerar();
+                    setDoc(docRef, { milestones: milestones, sei1: processoSEI1, desc1: descSEI1, sei2: processoSEI2, desc2: descSEI2 }).catch(e => console.error(e));
                 }
+                window.reordenarERenumerar();
                 recalcularCascata();
                 atualizarInterface();
             }, (error) => {
@@ -558,13 +701,95 @@
             renderCalendario();
         };
 
+        // NOVAS FUNÇÕES: Modal Processo SEI
+        window.abrirModalSEI = () => {
+            document.getElementById('seiNumero1').value = processoSEI1;
+            document.getElementById('seiDesc1').value = descSEI1;
+            document.getElementById('seiNumero2').value = processoSEI2;
+            document.getElementById('seiDesc2').value = descSEI2;
+            
+            const modal = document.getElementById('seiModal');
+            const content = document.getElementById('seiModalContent');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        };
+
+        window.fecharModalSEI = () => {
+            const modal = document.getElementById('seiModal');
+            const content = document.getElementById('seiModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        window.salvarModalSEI = () => {
+            processoSEI1 = document.getElementById('seiNumero1').value.trim();
+            descSEI1 = document.getElementById('seiDesc1').value.trim();
+            processoSEI2 = document.getElementById('seiNumero2').value.trim();
+            descSEI2 = document.getElementById('seiDesc2').value.trim();
+            
+            atualizarInterface();
+            if (currentUser && docRef) {
+                setDoc(docRef, { milestones: milestones, sei1: processoSEI1, desc1: descSEI1, sei2: processoSEI2, desc2: descSEI2 }, { merge: true })
+                    .catch(e => console.error("Erro ao gravar SEI:", e));
+            }
+            window.fecharModalSEI();
+        };
+
+        window.abrirModalNovaData = (dataStr) => {
+            document.getElementById('modalIndex').value = -1;
+            document.getElementById('modalTituloInput').value = ""; // Vazio para criar
+            document.getElementById('modalDataOrig').value = dataStr;
+            
+            // Auto-selecionar a Fase mais provável com base na data clicada
+            let suggestedPhase = 1;
+            const targetDate = strToDate(dataStr);
+            for (let i = milestones.length - 1; i >= 0; i--) {
+                if (strToDate(milestones[i].orig) <= targetDate) {
+                    suggestedPhase = milestones[i].phase;
+                    break;
+                }
+            }
+            document.getElementById('modalFaseSelect').value = suggestedPhase.toString();
+            
+            document.getElementById('modalResp').value = "";
+            document.getElementById('modalNomeResp').value = "";
+            document.getElementById('modalLink').value = "";
+            document.getElementById('modalLinkOficial').value = "";
+            document.getElementById('modalObs').value = "";
+            document.querySelector(`input[name="crit"][value="medium"]`).checked = true;
+            
+            const checkbox = document.getElementById('modalStatus');
+            checkbox.checked = false;
+            document.getElementById('modalDataReal').value = HOJE_STR;
+            
+            document.getElementById('btnExcluir').classList.add('hidden'); // Ocultar botão excluir
+
+            window.toggleDataReal();
+
+            const modal = document.getElementById('eventoModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        };
+
         window.abrirModal = (index) => {
             const m = milestones[index];
             document.getElementById('modalIndex').value = index;
-            document.getElementById('modalTitulo').innerText = m.title;
-            document.getElementById('modalFaseBadge').innerText = `Fase ${m.phase}`;
+            
+            // Retira a sigla para a caixa de edição ficar limpa
+            document.getElementById('modalTituloInput').value = m.title.replace(/^F\d+\.\d+\s*-\s*/, ''); 
+            
+            document.getElementById('modalFaseSelect').value = m.phase;
+            document.getElementById('modalDataOrig').value = m.orig;
             document.getElementById('modalResp').value = m.resp || '';
+            document.getElementById('modalNomeResp').value = m.nomeResp || ''; 
             document.getElementById('modalLink').value = m.link || '';
+            document.getElementById('modalLinkOficial').value = m.linkOficial || '';
             document.getElementById('modalObs').value = m.obs || '';
             document.querySelector(`input[name="crit"][value="${m.crit}"]`).checked = true;
             
@@ -572,6 +797,8 @@
             checkbox.checked = m.status === 'completed';
             document.getElementById('modalDataReal').value = m.executedDate || HOJE_STR;
             
+            document.getElementById('btnExcluir').classList.remove('hidden'); // Mostra excluir
+
             window.toggleDataReal();
 
             const modal = document.getElementById('eventoModal');
@@ -596,12 +823,114 @@
             else container.classList.add('hidden');
         };
 
-        window.salvarModal = () => {
-            const index = document.getElementById('modalIndex').value;
-            const m = milestones[index];
+        window.excluirModal = () => {
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmContent = document.getElementById('confirmModalContent');
+            confirmModal.classList.remove('hidden');
+            void confirmModal.offsetWidth; 
+            confirmModal.classList.remove('opacity-0');
+            confirmContent.classList.remove('scale-95');
+        };
+
+        window.fecharConfirmacao = () => {
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmContent = document.getElementById('confirmModalContent');
+            confirmModal.classList.add('opacity-0');
+            confirmContent.classList.add('scale-95');
+            setTimeout(() => { confirmModal.classList.add('hidden'); }, 300);
+        };
+
+        // --- FUNÇÕES DE DRAG & DROP (ARRASTAR E SOLTAR) ---
+        window.iniciarArraste = (ev, index) => {
+            ev.dataTransfer.setData("text/plain", index);
+            ev.dataTransfer.effectAllowed = "move";
+            setTimeout(() => ev.target.classList.add('opacity-50'), 0); // Fica semi-transparente ao arrastar
+        };
+
+        window.finalizarArraste = (ev) => {
+            ev.target.classList.remove('opacity-50');
+            document.querySelectorAll('.calendar-cell').forEach(c => c.classList.remove('bg-blue-50')); // Limpa destaques
+        };
+
+        window.permitirSoltar = (ev) => {
+            ev.preventDefault(); // Necessário para permitir o drop
+            ev.dataTransfer.dropEffect = "move";
+        };
+
+        window.destacarCelula = (ev) => {
+            ev.preventDefault();
+            const cell = ev.target.closest('.calendar-cell');
+            if (cell) cell.classList.add('bg-blue-50'); // Ilumina o dia ao passar por cima
+        };
+
+        window.removerDestaque = (ev) => {
+            const cell = ev.target.closest('.calendar-cell');
+            if (cell) cell.classList.remove('bg-blue-50');
+        };
+
+        window.soltarEvento = (ev, novaDataStr) => {
+            ev.preventDefault();
+            const cell = ev.target.closest('.calendar-cell');
+            if (cell) cell.classList.remove('bg-blue-50');
+
+            const indexStr = ev.dataTransfer.getData("text/plain");
+            if (indexStr === "") return;
             
+            const index = parseInt(indexStr);
+            if (isNaN(index) || index < 0 || index >= milestones.length) return;
+
+            const m = milestones[index];
+            if (m.status === 'completed') return; // Bloqueio de segurança para concluídos
+
+            m.orig = novaDataStr; // Atualiza a data base
+
+            // Executa a magia toda de reorganização
+            window.reordenarERenumerar();
+            recalcularCascata();
+            atualizarInterface();
+
+            // Grava na nuvem
+            if (currentUser && docRef) {
+                setDoc(docRef, { milestones: milestones, sei1: processoSEI1, desc1: descSEI1, sei2: processoSEI2, desc2: descSEI2 }, { merge: true }).catch(e => console.error("Erro ao mover:", e));
+            }
+        };
+
+        window.executarExclusao = () => {
+            const index = parseInt(document.getElementById('modalIndex').value);
+            if(index > -1) {
+                milestones.splice(index, 1);
+                window.reordenarERenumerar();
+                recalcularCascata();
+                atualizarInterface();
+                window.fecharModal();
+                window.fecharConfirmacao();
+                
+                if (currentUser && docRef) {
+                    setDoc(docRef, { milestones: milestones, sei1: processoSEI1, desc1: descSEI1, sei2: processoSEI2, desc2: descSEI2 }, { merge: true }).catch(e => console.error("Erro ao excluir:", e));
+                }
+            }
+        };
+
+        window.salvarModal = () => {
+            const index = parseInt(document.getElementById('modalIndex').value);
+            const tituloLimpo = document.getElementById('modalTituloInput').value || "Novo Entregável";
+            const fase = parseInt(document.getElementById('modalFaseSelect').value);
+            
+            let m;
+            if (index === -1) {
+                m = { id: Date.now() }; 
+                milestones.push(m);
+            } else {
+                m = milestones[index];
+            }
+
+            m.title = tituloLimpo; 
+            m.phase = fase;
+            m.orig = document.getElementById('modalDataOrig').value;
             m.resp = document.getElementById('modalResp').value;
+            m.nomeResp = document.getElementById('modalNomeResp').value; 
             m.link = document.getElementById('modalLink').value;
+            m.linkOficial = document.getElementById('modalLinkOficial').value;
             m.obs = document.getElementById('modalObs').value;
             m.crit = document.querySelector('input[name="crit"]:checked').value;
             
@@ -614,28 +943,41 @@
                 m.executedDate = null;
             }
 
+            window.reordenarERenumerar(); // Processa a mágica da ordenação antes de fechar/salvar
+            recalcularCascata();
+            atualizarInterface();
             window.fecharModal();
 
             if (currentUser && docRef) {
-                setDoc(docRef, { milestones: milestones }).catch(e => console.error("Erro ao gravar:", e));
+                setDoc(docRef, { milestones: milestones, sei1: processoSEI1, desc1: descSEI1, sei2: processoSEI2, desc2: descSEI2 }, { merge: true }).catch(e => console.error("Erro ao gravar:", e));
             }
         };
 
         // --- 4. LÓGICA DE NEGÓCIO E RENDERIZAÇÃO ---
         function recalcularCascata() {
+            let accumulatedDelay = 0;
+            let lastProjectedDate = null;
+
             for (let i = 0; i < milestones.length; i++) {
-                let atual = milestones[i];
-                if (i === 0) {
-                    atual.projectedDate = atual.executedDate || atual.orig;
+                let m = milestones[i];
+
+                if (m.status === 'completed') {
+                    m.projectedDate = m.executedDate || m.orig;
+                    accumulatedDelay = Math.round((strToDate(m.projectedDate) - strToDate(m.orig)) / (1000 * 60 * 60 * 24));
+                    lastProjectedDate = m.projectedDate;
                 } else {
-                    let ant = milestones[i - 1];
-                    let dataBaseStr = ant.status === 'completed' ? ant.executedDate : 
-                        ((strToDate(ant.projectedDate) < strToDate(HOJE_STR)) ? HOJE_STR : ant.projectedDate);
-                    
-                    const diffDiasOriginais = Math.round((strToDate(atual.orig) - strToDate(ant.orig)) / (1000*60*60*24));
-                    atual.projectedDate = addDays(dataBaseStr, diffDiasOriginais >= 0 ? diffDiasOriginais : 0);
+                    let projStr = addDays(m.orig, accumulatedDelay);
+
+                    if (lastProjectedDate && strToDate(projStr) < strToDate(lastProjectedDate)) {
+                        projStr = lastProjectedDate;
+                    }
+
+                    m.projectedDate = projStr;
+                    accumulatedDelay = Math.round((strToDate(m.projectedDate) - strToDate(m.orig)) / (1000 * 60 * 60 * 24));
+                    lastProjectedDate = m.projectedDate;
                 }
-                atual.isLate = (atual.status !== 'completed' && strToDate(HOJE_STR) > strToDate(atual.projectedDate));
+
+                m.isLate = (m.status !== 'completed' && strToDate(HOJE_STR) > strToDate(m.projectedDate));
             }
         }
 
@@ -645,49 +987,128 @@
             renderGraficoLinha();
             renderCalendario();
             renderCheckpoints();
-            renderContadores();
+            renderContadoresEProcesso();
         }
 
-        function renderContadores() {
-            // O prazo final da contratação para assinar é 01/07/2026 (Homologação)
+        function renderContadoresEProcesso() {
+            // 1. Processo SEI e Equipa GT
+            const elSEI = document.getElementById('displaySEI');
+            const elGT = document.getElementById('displayGT');
+            
+            if (elSEI) {
+                let htmlSEI = '';
+                const formatSEI = (num, desc) => {
+                    if (!num) return '';
+                    let label = `SEI: ${num}`;
+                    if (desc) {
+                        if (desc.startsWith('http')) {
+                            return `<a href="${desc}" target="_blank" class="text-gov-blue hover:underline flex items-center gap-1 w-max" title="Abrir Processo SEI"> ${label} <i class="ph-bold ph-external-link text-[10px]"></i></a>`;
+                        } else {
+                            return `<span class="block text-gray-800" title="${desc}">${label} <span class="text-[9px] text-gray-500 font-normal ml-1 border border-gray-200 px-1 rounded bg-gray-50">${desc}</span></span>`;
+                        }
+                    }
+                    return `<span class="block">${label}</span>`;
+                };
+
+                const p1 = formatSEI(processoSEI1, descSEI1);
+                const p2 = formatSEI(processoSEI2, descSEI2);
+
+                if (p1 || p2) {
+                    if (p1) htmlSEI += p1;
+                    if (p2) htmlSEI += p2;
+                    elSEI.innerHTML = htmlSEI;
+                    elSEI.className = "text-sm font-bold text-gray-800 tracking-tight flex flex-col gap-1.5";
+                } else {
+                    elSEI.innerHTML = "Sem número SEI";
+                    elSEI.className = "text-sm font-bold text-gray-400 italic tracking-tight";
+                }
+            }
+            
+            if (elGT) {
+                const nomesSet = new Set();
+                milestones.forEach(m => {
+                    if (m.nomeResp && m.nomeResp.trim() !== '') {
+                        nomesSet.add(m.nomeResp.trim());
+                    }
+                });
+                const nomesArr = Array.from(nomesSet);
+                
+                if (nomesArr.length > 0) {
+                    elGT.innerText = nomesArr.join(", ");
+                    elGT.title = nomesArr.join("\n");
+                    elGT.className = "text-[10px] text-purple-700 font-semibold leading-tight line-clamp-2";
+                } else {
+                    elGT.innerText = "Nenhum membro registado";
+                    elGT.title = "Adicione nomes nos entregáveis para que apareçam aqui";
+                    elGT.className = "text-[10px] text-gray-500 font-medium leading-tight line-clamp-2";
+                }
+            }
+
+            // 2. Contadores de Prazo (Apenas Dias)
             const prazoFinalDate = "2026-07-01"; 
             const diasFinal = diffDays(HOJE_STR, prazoFinalDate);
             
             const elPrazoFinal = document.getElementById('diasPrazoFinal');
-            if(elPrazoFinal) elPrazoFinal.innerText = diasFinal;
+            if (elPrazoFinal) {
+                if (diasFinal >= 0) {
+                    elPrazoFinal.innerText = diasFinal;
+                    elPrazoFinal.classList.remove('text-red-600');
+                } else {
+                    elPrazoFinal.innerText = "0";
+                    elPrazoFinal.classList.add('text-red-600');
+                }
+            }
 
             const pendentes = milestones.filter(m => m.status !== 'completed');
-            const elProx = document.getElementById('diasProximaEntrega');
             const elProxNome = document.getElementById('nomeProximaEntrega');
+            const elRespProx = document.getElementById('respProximaEntrega');
             const elIcone = document.getElementById('iconeProxEntrega');
+            const elProx = document.getElementById('diasProximaEntrega');
 
             if (pendentes.length > 0) {
                 const prox = pendentes[0];
-                const dataAlvo = prox.projectedDate || prox.orig;
-                const diasProx = diffDays(HOJE_STR, dataAlvo);
+                const dataAlvoStr = prox.projectedDate || prox.orig;
+                const diasProx = diffDays(HOJE_STR, dataAlvoStr);
+                
                 const proxNome = prox.title;
+                const respName = prox.nomeResp ? `${prox.resp} (${prox.nomeResp})` : (prox.resp || 'Sem responsável');
 
                 elProxNome.innerText = proxNome;
-
+                elRespProx.innerText = `👤 ${respName}`;
+                
                 if (diasProx < 0) {
-                    elProx.innerText = Math.abs(diasProx);
+                    // Atrasado
+                    elProx.innerText = diasProx; 
                     elProxNome.innerText = `Atrasado! (${proxNome})`;
-                    elProx.className = "text-2xl font-black text-red-600";
-                    elIcone.className = "bg-red-50 p-3 rounded-lg text-red-600";
+                    elProx.className = "text-2xl font-black text-red-600 transition-colors";
+                    elIcone.className = "bg-red-50 p-3 rounded-lg text-red-600 transition-colors";
+                    elRespProx.className = "text-[10px] text-red-700 font-semibold truncate bg-red-100 px-1.5 py-0.5 rounded inline-block w-max mt-0.5 transition-colors";
                 } else if (diasProx === 0) {
+                    // Hoje
                     elProx.innerText = "Hoje";
-                    elProx.className = "text-2xl font-black text-yellow-600";
-                    elIcone.className = "bg-yellow-50 p-3 rounded-lg text-yellow-600";
+                    elProx.className = "text-2xl font-black text-yellow-600 transition-colors";
+                    elIcone.className = "bg-yellow-50 p-3 rounded-lg text-yellow-600 transition-colors";
+                    elRespProx.className = "text-[10px] text-yellow-700 font-semibold truncate bg-yellow-100 px-1.5 py-0.5 rounded inline-block w-max mt-0.5 transition-colors";
                 } else {
+                    // No prazo
                     elProx.innerText = diasProx;
-                    elProx.className = "text-2xl font-black text-gov-blue";
-                    elIcone.className = "bg-blue-50 p-3 rounded-lg text-gov-blue";
+                    elProx.className = "text-2xl font-black text-gov-blue transition-colors";
+                    elIcone.className = "bg-blue-50 p-3 rounded-lg text-gov-blue transition-colors";
+                    elRespProx.className = "text-[10px] text-gov-blue font-semibold truncate bg-blue-50 px-1.5 py-0.5 rounded inline-block w-max mt-0.5 transition-colors";
                 }
             } else {
+                // Tudo concluído
                 elProx.innerText = "0";
                 elProxNome.innerText = "Tudo concluído!";
+                elRespProx.innerText = "";
+                elRespProx.className = "hidden";
                 elProx.className = "text-2xl font-black text-gov-green";
                 elIcone.className = "bg-green-50 p-3 rounded-lg text-gov-green";
+            }
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
             }
         }
 
@@ -699,6 +1120,7 @@
             milestones.forEach((item, i) => {
                 const isC = item.status === 'completed';
                 const dateToShow = formatPt(isC ? item.executedDate : item.projectedDate);
+                const showResp = item.nomeResp ? `${item.resp} - <b>${item.nomeResp}</b>` : (item.resp || 'Sem responsável');
                 
                 const html = `
                     <div class="border border-gray-100 rounded-md p-2 ${isC ? 'bg-gray-50' : 'bg-white'} hover:shadow-sm cursor-pointer transition relative group" onclick="abrirModal(${i})">
@@ -711,7 +1133,7 @@
                                     ${getCritIcon(item.crit)} ${item.title}
                                 </h4>
                                 <p class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
-                                    <i class="ph-fill ph-user"></i> ${item.resp || 'Sem responsável'}
+                                    <i class="ph-fill ph-user"></i> <span>${showResp}</span>
                                 </p>
                                 ${item.obs ? `<p class="text-[9px] text-gray-600 mt-1 italic leading-tight border-l-2 border-gray-200 pl-1.5">${item.obs}</p>` : ''}
                             </div>
@@ -719,7 +1141,10 @@
                                 <span class="text-[9px] px-1 py-0.5 rounded ${isC ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'} whitespace-nowrap">
                                     ${dateToShow}
                                 </span>
-                                ${item.link ? `<button onclick="event.stopPropagation(); window.open('${item.link}', '_blank')" class="text-[9px] text-gov-blue hover:underline flex items-center gap-1 mt-1 bg-blue-50 px-1 py-0.5 rounded border border-blue-100 transition hover:bg-blue-100"><i class="ph-bold ph-link"></i> Acessar</button>` : ''}
+                                <div class="flex gap-1 mt-1">
+                                    ${item.link ? `<button onclick="event.stopPropagation(); window.open('${item.link}', '_blank')" class="text-[9px] text-gov-blue hover:underline flex items-center gap-1 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 transition hover:bg-blue-100" title="Acessar Minuta"><i class="ph-bold ph-file-dashed"></i> Minuta</button>` : ''}
+                                    ${item.linkOficial ? `<button onclick="event.stopPropagation(); window.open('${item.linkOficial}', '_blank')" class="text-[9px] text-gov-green hover:underline flex items-center gap-1 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 transition hover:bg-green-100" title="Acessar Documento Oficial"><i class="ph-bold ph-certificate"></i> Oficial</button>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -738,12 +1163,14 @@
             container.innerHTML = '';
             
             let concluidos = 0;
+            const temAtrasoGlobal = milestones.some(m => m.isLate);
+
             milestones.forEach((m, i) => {
                 let colorClass = 'bg-gray-200';
                 if (m.status === 'completed') {
                     colorClass = 'bg-gov-green';
                     concluidos++;
-                } else if (m.status === 'pending' && m.orig < HOJE_STR) {
+                } else if (m.isLate) {
                     colorClass = 'bg-gov-red animate-pulse';
                 } else if (i === 0 || milestones[i-1].status === 'completed') {
                     colorClass = 'bg-gov-blue/50'; 
@@ -753,15 +1180,34 @@
             });
             
             const perc = Math.round((concluidos / milestones.length) * 100);
-            document.getElementById('cronoPercent').innerText = `${perc}% Concluído`;
+            const labelElement = document.getElementById('cronoPercent');
+            
+            if (perc === 100) {
+                labelElement.className = "text-xs font-bold text-gov-green transition-colors duration-300";
+            } else if (temAtrasoGlobal) {
+                labelElement.className = "text-xs font-bold text-gov-red animate-pulse transition-colors duration-300";
+            } else {
+                labelElement.className = "text-xs font-bold text-gov-blue transition-colors duration-300";
+            }
+            
+            labelElement.innerText = `${perc}% Concluído`;
         }
 
-        const shortNames = {
+        const shortNamesList = {
             1: "1ª Reunião", 2: "2ª Reunião", 3: "DFD", 4: "PCA", 5: "Aprov. PCA/EPC",
             6: "ETP/Pesquisa", 7: "TR/Mapa", 8: "CONJUR", 9: "Aprovação",
             10: "Edital PNCP", 11: "Sessão", 12: "Julgamento", 13: "Homologação",
             14: "Assinatura", 15: "Operação"
         };
+
+        function getShortName(m) {
+            let sName = shortNamesList[m.id];
+            if (!sName) {
+                const limpo = m.title.replace(/^F\d+\.\d+\s*-\s*/, '');
+                sName = limpo.split(' ').slice(0, 2).join(' ');
+            }
+            return sName;
+        }
 
         function renderGauges() {
             for (let fase = 1; fase <= 4; fase++) {
@@ -783,7 +1229,7 @@
                         if (m.status === 'completed') colorClass = 'text-gov-green font-bold';
                         else if (m.isLate) colorClass = 'text-gov-red font-bold animate-pulse';
 
-                        const sName = shortNames[m.id] || m.title;
+                        const sName = getShortName(m);
                         const separator = idx < itensFase.length - 1 ? '<span class="text-gray-300 mx-0.5">,</span>' : '';
                         return `<span class="${colorClass} transition-colors duration-300" title="${m.title}">${sName}</span>${separator}`;
                     }).join(' ');
@@ -823,19 +1269,20 @@
 
         function renderGraficoLinha() {
             const ctx = document.getElementById('graficoLinha').getContext('2d');
-            const temAtraso = milestones.some(m => m.status === 'pending' && m.orig < HOJE_STR);
+            const temAtraso = milestones.some(m => m.status === 'pending' && m.projectedDate < HOJE_STR);
             const corExecucao = temAtraso ? '#e02424' : '#168821'; 
             document.getElementById('legendaExecutado').className = `w-2 h-2 rounded-full transition-colors ${temAtraso ? 'bg-gov-red' : 'bg-gov-green'}`;
 
             let datasUnicas = new Set();
             milestones.forEach(m => {
                 datasUnicas.add(m.orig);
+                if (m.projectedDate) datasUnicas.add(m.projectedDate);
                 if (m.status === 'completed' && m.executedDate) datasUnicas.add(m.executedDate);
             });
             datasUnicas.add(HOJE_STR); 
             let timeline = Array.from(datasUnicas).sort();
             
-            const planejadoAcumulado = timeline.map(data => milestones.filter(m => m.orig <= data).length);
+            const planejadoAcumulado = timeline.map(data => milestones.filter(m => (m.projectedDate || m.orig) <= data).length);
             const executadoAcumulado = timeline.map(data => {
                 if (data > HOJE_STR) return null; 
                 return milestones.filter(m => m.status === 'completed' && m.executedDate <= data).length;
@@ -885,7 +1332,8 @@
                                     const dataReal = timeline[dataIndex];
                                     let info = [];
                                     milestones.forEach(m => {
-                                        if (m.orig === dataReal) info.push(`📍 Previsto: ${m.title}`);
+                                        const proj = m.projectedDate || m.orig;
+                                        if (proj === dataReal) info.push(`📍 Previsto: ${m.title}`);
                                         if (m.status === 'completed' && m.executedDate === dataReal) info.push(`✅ Concluído: ${m.title}`);
                                     });
                                     return info.length ? '\n' + info.join('\n') : '';
@@ -899,7 +1347,14 @@
                             max: milestones.length,
                             ticks: { stepSize: 2, font: {size: 10} }
                         },
-                        x: { ticks: { font: {size: 10}, maxTicksLimit: 10 } }
+                        x: { 
+                            ticks: { 
+                                font: {size: 10}, 
+                                maxTicksLimit: 15,
+                                maxRotation: 45,
+                                minRotation: 45
+                            } 
+                        }
                     }
                 }
             });
@@ -925,24 +1380,44 @@
                 
                 let eventosHtml = '';
                 milestones.forEach((m, index) => {
-                    const dataAlvo = m.status === 'completed' ? m.executedDate : m.orig;
+                    const dataAlvo = m.status === 'completed' ? m.executedDate : m.projectedDate;
                     if (dataAlvo === dataAtualStr) {
                         let styleClass = 'event-pending';
                         if (m.status === 'completed') styleClass = 'event-completed';
-                        else if (m.orig < HOJE_STR) styleClass = 'event-late';
+                        else if (m.isLate) styleClass = 'event-late';
+
+                        const nomeExibicao = m.nomeResp ? m.nomeResp : (m.resp ? m.resp : 'Sem responsável');
+                        
+                        // Lógica para permitir o arrasto apenas em eventos pendentes
+                        const isCompleted = m.status === 'completed';
+                        const cursorClass = isCompleted ? 'cursor-pointer' : 'cursor-move';
+                        const arrastarAttr = !isCompleted ? `draggable="true" ondragstart="iniciarArraste(event, ${index})" ondragend="finalizarArraste(event)"` : '';
 
                         eventosHtml += `
-                            <div class="cal-event ${styleClass}" onclick="abrirModal(${index})">
-                                ${getCritIcon(m.crit)}
-                                <span class="truncate" title="${m.title}">${m.title.split('-')[0]}</span>
+                            <div class="cal-event ${styleClass} relative z-20 ${cursorClass}" onclick="abrirModal(${index})" ${arrastarAttr} title="${m.title} \n👤 ${nomeExibicao}${isCompleted ? '\n(Concluído - Não é possível arrastar)' : ''}">
+                                <div class="flex items-center gap-1 w-full overflow-hidden pointer-events-none">
+                                    ${getCritIcon(m.crit)}
+                                    <span class="truncate font-semibold tracking-tight">${m.title}</span>
+                                </div>
+                                <div class="flex items-center gap-1 w-full overflow-hidden opacity-90 pl-3 pointer-events-none">
+                                    <i class="ph-fill ph-user text-[9px]"></i>
+                                    <span class="truncate text-[9px]">${nomeExibicao}</span>
+                                </div>
                             </div>
                         `;
                     }
                 });
 
                 grid.innerHTML += `
-                    <div class="calendar-cell ${isHoje ? 'today' : ''}">
-                        <div class="date-num">${dia}</div>
+                    <div class="calendar-cell group relative ${isHoje ? 'today' : ''} transition-colors duration-200"
+                         ondragover="permitirSoltar(event)" 
+                         ondragenter="destacarCelula(event)" 
+                         ondragleave="removerDestaque(event)" 
+                         ondrop="soltarEvento(event, '${dataAtualStr}')">
+                        <div class="date-num pointer-events-none">${dia}</div>
+                        <button type="button" onclick="abrirModalNovaData('${dataAtualStr}')" title="Adicionar Novo Entregável" class="absolute top-1 left-1 opacity-0 group-hover:opacity-100 bg-gov-blue text-white rounded w-5 h-5 flex items-center justify-center transition shadow-sm hover:bg-gov-dark z-10">
+                            <i class="ph-bold ph-plus text-[10px]"></i>
+                        </button>
                         ${eventosHtml}
                     </div>
                 `;
